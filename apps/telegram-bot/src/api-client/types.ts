@@ -1,0 +1,58 @@
+export interface ResolvedUser {
+  id: string;
+  provider: string;
+  provider_user_id: string;
+  name?: string;
+  email?: string;
+  avatar_url?: string;
+  phone?: string;
+  preferred_language?: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MasterIngredient {
+  canonical_name: string;
+  canonical_name_ua?: string;
+  category?: string;
+  default_unit?: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  user_id: string;
+  ingredient_id: string;
+  quantity: number;
+  unit: string;
+  status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+  expires_at?: string;
+  created_at: string;
+  updated_at: string;
+  master_ingredients: MasterIngredient;
+}
+
+export interface ProcessedItem {
+  raw_name: string;
+  canonical_name: string;
+  canonical_name_ua?: string;
+  ingredient_id: string;
+  quantity: number;
+  unit: string;
+  action: 'ADD' | 'CONSUME' | 'WASTE' | 'ADJUSTMENT';
+}
+
+export interface Clarification {
+  raw_name: string;
+  quantity: number;
+  unit: string;
+  candidates: { id: string; canonical_name: string; canonical_name_ua?: string }[];
+}
+
+export interface ProcessResult {
+  status: 'completed' | 'needs_clarification';
+  processed_items: ProcessedItem[];
+  clarifications: Clarification[];
+  transaction_ids: string[];
+  cleared_count?: number;
+}

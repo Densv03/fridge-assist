@@ -3,6 +3,7 @@ export interface ExtractedItem {
   name_ua: string;
   quantity: number;
   unit: string;
+  category: string;
 }
 
 export interface ExtractionResult {

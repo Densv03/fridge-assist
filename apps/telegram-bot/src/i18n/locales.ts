@@ -52,6 +52,26 @@ const strings: Record<Lang, Record<string, string>> = {
     voice_error:
       'Не вдалося обробити голосове повідомлення. Спробуйте ще раз.',
 
+    // preview / confirmation
+    preview_title: '<b>Знайдено продукти:</b>',
+    preview_clarification_note: '<b>Потребують уточнення:</b>',
+    btn_confirm: '✅ Підтвердити',
+    btn_cancel: '❌ Скасувати',
+    btn_custom: '➕ Інше',
+    preview_confirmed: '✅ <b>Підтверджено!</b>',
+    preview_cancelled: '❌ Скасовано.',
+    preview_expired: '⏰ Попередній перегляд закінчився. Надішліть повідомлення ще раз.',
+    confirm_error: 'Не вдалося підтвердити. Спробуйте ще раз.',
+    cancel_error: 'Не вдалося скасувати. Спробуйте ще раз.',
+    custom_item_prompt: '✏️ Введіть назву для <b>{item}</b>:',
+    custom_item_added: '✅ Додано: <b>{name}</b>',
+    replace_item_prompt: '✏️ Введіть нову назву для <b>{item}</b>:',
+    replace_item_done: '✅ Продукт замінено',
+    change_amount_prompt: '🔢 Введіть нову кількість для <b>{item}</b> (напр. 500г, 2 кг, пів літра):',
+    change_amount_done: '✅ Кількість змінено',
+    change_amount_invalid: '❌ Не вдалося розпізнати кількість. Спробуйте ще раз, напр. 500г, 2 кг, пів літра',
+    preview_confidence_legend: '🟢 точний збіг · 🟡 ймовірний збіг · 🟠 приблизний збіг',
+
     // help
     help_title: '📖 <b>Доступні команди:</b>\n',
     help_commands:
@@ -113,6 +133,26 @@ const strings: Record<Lang, Record<string, string>> = {
       'Could not download the voice message. Please try again.',
     voice_error: 'Failed to process the voice message. Please try again.',
 
+    // preview / confirmation
+    preview_title: '<b>Items detected:</b>',
+    preview_clarification_note: '<b>Need clarification:</b>',
+    btn_confirm: '✅ Confirm',
+    btn_cancel: '❌ Cancel',
+    btn_custom: '➕ Custom',
+    preview_confirmed: '✅ <b>Confirmed!</b>',
+    preview_cancelled: '❌ Cancelled.',
+    preview_expired: '⏰ Preview has expired. Please send your message again.',
+    confirm_error: 'Failed to confirm. Please try again.',
+    cancel_error: 'Failed to cancel. Please try again.',
+    custom_item_prompt: '✏️ Enter a name for <b>{item}</b>:',
+    custom_item_added: '✅ Added: <b>{name}</b>',
+    replace_item_prompt: '✏️ Type a new name for <b>{item}</b>:',
+    replace_item_done: '✅ Item replaced',
+    change_amount_prompt: '🔢 Type a new amount for <b>{item}</b> (e.g. 500g, 2 kg, half a liter):',
+    change_amount_done: '✅ Amount updated',
+    change_amount_invalid: "❌ Couldn't recognize a quantity. Try again, e.g. 500g, 2 kg, half a liter",
+    preview_confidence_legend: '🟢 exact match · 🟡 likely match · 🟠 approximate match',
+
     // help
     help_title: '📖 <b>Available commands:</b>\n',
     help_commands:
@@ -157,6 +197,8 @@ const CATEGORY_UA: Record<string, string> = {
   'Oils & Condiments': 'Олії та соуси',
   'Seafood': 'Морепродукти',
   'Spices & Seasonings': 'Спеції та приправи',
+  'Beverages': 'Напої',
+  'Snacks & Sweets': 'Солодощі та снеки',
   'Vegetables': 'Овочі',
   'Other': 'Інше',
 };

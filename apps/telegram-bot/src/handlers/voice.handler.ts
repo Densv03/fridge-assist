@@ -1,7 +1,12 @@
 import { Bot, Keyboard } from 'grammy';
 import { ApiClient } from '../api-client/api-client';
-import { ingestAudio } from '../api-client/ingestion.api';
+import { previewAudio } from '../api-client/confirmation.api';
 import { formatIngestionResult } from '../formatters/ingestion.formatter';
+import {
+  formatPreview,
+  buildPreviewKeyboard,
+} from '../formatters/confirmation.formatter';
+import { cachePreview } from './confirmation.handler';
 import { BotContext } from '../middleware/auth';
 import { t } from '../i18n/locales';
 import { downloadTelegramFile } from '../utils/file-download';
@@ -39,15 +44,52 @@ export function registerVoiceHandler(
         config.telegramBotToken,
       );
 
-      const result = await ingestAudio(
+      const preview = await previewAudio(
         api,
         ctx.internalUserId!,
         buffer,
         'voice.ogg',
         'audio/ogg',
       );
-      await ctx.reply(formatIngestionResult(result, ctx.lang), {
+
+      // CLEAR_ALL
+      if (preview.intent === 'CLEAR_ALL') {
+        const fakeResult = {
+          status: 'completed' as const,
+          processed_items: [],
+          clarifications: [],
+          transaction_ids: [],
+          cleared_count: preview.cleared_count,
+        };
+        await ctx.reply(formatIngestionResult(fakeResult, ctx.lang), {
+          parse_mode: 'HTML',
+        });
+        return;
+      }
+
+      // No items
+      if (preview.items.length === 0 && preview.clarifications.length === 0) {
+        await ctx.reply(t(ctx.lang, 'no_items_found'));
+        return;
+      }
+
+      // Show preview with inline keyboard
+      const { shortId, itemIdMap, candidateIdMap } = cachePreview(
+        preview,
+        ctx.internalUserId!,
+      );
+      const text = formatPreview(preview, ctx.lang);
+      const kb = buildPreviewKeyboard(
+        preview,
+        shortId,
+        itemIdMap,
+        candidateIdMap,
+        ctx.lang,
+      );
+
+      await ctx.reply(text, {
         parse_mode: 'HTML',
+        reply_markup: kb,
       });
     } catch (err) {
       logger.error('Failed to process voice message', err);

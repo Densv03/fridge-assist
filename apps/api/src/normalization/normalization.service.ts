@@ -6,6 +6,7 @@ interface MatchedItem extends ExtractedItem {
   ingredient_id: string;
   canonical_name: string;
   canonical_name_ua?: string;
+  similarity: number;
 }
 
 interface AmbiguousItem extends ExtractedItem {
@@ -13,6 +14,7 @@ interface AmbiguousItem extends ExtractedItem {
     id: string;
     canonical_name: string;
     canonical_name_ua?: string;
+    category?: string;
     similarity: number;
   }[];
 }
@@ -23,6 +25,8 @@ export interface NormalizationResult {
   unmatched: ExtractedItem[];
   created: MatchedItem[];
 }
+
+const MIN_AUTO_MATCH_SIMILARITY = 0.3;
 
 @Injectable()
 export class NormalizationService {
@@ -41,8 +45,10 @@ export class NormalizationService {
     for (const item of items) {
       const candidates = await this.findCandidates(item.name);
 
-      if (candidates.length === 0) {
-        // Auto-create new ingredient with Ukrainian name from extraction
+      const topSimilarity = candidates[0]?.similarity ?? 0;
+
+      if (candidates.length === 0 || topSimilarity < MIN_AUTO_MATCH_SIMILARITY) {
+        // No good match — auto-create new ingredient
         const created = await this.createMasterIngredient(item);
         if (created) {
           result.created.push({
@@ -50,26 +56,32 @@ export class NormalizationService {
             ingredient_id: created.id,
             canonical_name: created.canonical_name,
             canonical_name_ua: created.canonical_name_ua ?? item.name_ua,
+            similarity: 1.0,
           });
         } else {
           result.unmatched.push(item);
         }
       } else if (
-        candidates.length === 1 ||
-        candidates[0].similarity > 0.6 ||
-        (candidates[0].similarity > 0.3 &&
-          candidates[0].similarity - (candidates[1]?.similarity ?? 0) > 0.15)
+        topSimilarity > 0.6 ||
+        (topSimilarity > 0.3 &&
+          topSimilarity - (candidates[1]?.similarity ?? 0) > 0.15)
       ) {
         // Clear single match — backfill Ukrainian name if missing
         if (!candidates[0].canonical_name_ua && item.name_ua) {
           await this.updateUkrainianName(candidates[0].id, item.name_ua);
           candidates[0].canonical_name_ua = item.name_ua;
         }
+        // Backfill category if missing
+        if (!candidates[0].category && item.category) {
+          await this.updateCategory(candidates[0].id, item.category);
+          candidates[0].category = item.category;
+        }
         result.matched.push({
           ...item,
           ingredient_id: candidates[0].id,
           canonical_name: candidates[0].canonical_name,
           canonical_name_ua: candidates[0].canonical_name_ua,
+          similarity: topSimilarity,
         });
       } else {
         // Ambiguous — multiple close matches
@@ -90,6 +102,7 @@ export class NormalizationService {
       id: string;
       canonical_name: string;
       canonical_name_ua?: string;
+      category?: string;
       similarity: number;
     }[]
   > {
@@ -98,7 +111,7 @@ export class NormalizationService {
     // First check exact alias match
     const { data: aliasMatch } = await client
       .from('master_ingredients')
-      .select('id, canonical_name, canonical_name_ua')
+      .select('id, canonical_name, canonical_name_ua, category')
       .contains('aliases', [name.toLowerCase()])
       .limit(1);
 
@@ -116,7 +129,7 @@ export class NormalizationService {
       // Fallback to ilike
       const { data: fallback } = await client
         .from('master_ingredients')
-        .select('id, canonical_name, canonical_name_ua')
+        .select('id, canonical_name, canonical_name_ua, category')
         .ilike('canonical_name', `%${name}%`)
         .limit(5);
       return (fallback ?? []).map((r) => ({ ...r, similarity: 0.5 }));
@@ -130,6 +143,14 @@ export class NormalizationService {
     await client
       .from('master_ingredients')
       .update({ canonical_name_ua: nameUa })
+      .eq('id', id);
+  }
+
+  private async updateCategory(id: string, category: string): Promise<void> {
+    const client = this.supabase.getClient();
+    await client
+      .from('master_ingredients')
+      .update({ category })
       .eq('id', id);
   }
 
@@ -150,6 +171,7 @@ export class NormalizationService {
       .insert({
         canonical_name: canonicalName,
         canonical_name_ua: item.name_ua || null,
+        category: item.category || 'Other',
         default_unit: item.unit,
         aliases: [item.name.toLowerCase()],
       })

@@ -27,7 +27,35 @@ Rules:
 - NEVER return vague or generic items like "Food", "Groceries", "Stuff", "Everything", "Items", "Products"
 - Only return specific, identifiable food ingredients (e.g. "Milk", "Bread", "Eggs")
 - If the input is too vague to identify specific items and is NOT a clear-all command (e.g. "bought some stuff"), return an EMPTY items array with ADD intent
+- Assign a category to each item from this list: Bakery, Baking, Beverages, Dairy & Eggs, Fruits, Grains & Pasta, Meat & Poultry, Oils & Condiments, Seafood, Snacks & Sweets, Spices & Seasonings, Vegetables, Other
+  Examples: "Milk" → "Dairy & Eggs", "Apple" → "Fruits", "Chicken" → "Meat & Poultry", "Tea" → "Beverages", "Ice Cream" → "Snacks & Sweets", "Rice" → "Grains & Pasta", "Bread" → "Bakery"
 - Non-food items should be ignored`;
+
+const PARSE_QUANTITY_PROMPT = `You are a quantity parser for a kitchen inventory app.
+Parse the user's free-form text into a structured quantity and unit.
+
+Rules:
+- The user may write in ANY language (English, Ukrainian, Russian, etc.)
+- If the input does NOT represent a quantity or amount (e.g. random words, gibberish, unrelated text), set "valid" to false
+- If the input is a recognizable quantity/amount, set "valid" to true
+- Normalize quantities: "a dozen"/"дюжина" = 12, "a couple"/"пара" = 2, "a few"/"кілька"/"несколько" = 3
+- "half"/"пів"/"половина" = 0.5
+- Use standard units: pcs, grams, kg, liters, ml, cups, tbsp, tsp
+- Convert informal units: "a gallon" = 3.785 liters, "a pound"/"фунт" = 453.6 grams
+- Abbreviations: "г"/"g" = grams, "кг" = kg, "л"/"l" = liters, "мл" = ml, "шт" = pcs
+- If the user provides only a number without a unit, use the provided current_unit as the unit
+- If the user provides a unit, use that unit (normalized to standard form)
+- Always return a positive number for quantity`;
+
+const PARSE_QUANTITY_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    valid: { type: Type.BOOLEAN },
+    quantity: { type: Type.NUMBER },
+    unit: { type: Type.STRING },
+  },
+  required: ['valid', 'quantity', 'unit'],
+};
 
 const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
@@ -45,8 +73,26 @@ const RESPONSE_SCHEMA = {
           name_ua: { type: Type.STRING },
           quantity: { type: Type.NUMBER },
           unit: { type: Type.STRING },
+          category: {
+            type: Type.STRING,
+            enum: [
+              'Bakery',
+              'Baking',
+              'Beverages',
+              'Dairy & Eggs',
+              'Fruits',
+              'Grains & Pasta',
+              'Meat & Poultry',
+              'Oils & Condiments',
+              'Seafood',
+              'Snacks & Sweets',
+              'Spices & Seasonings',
+              'Vegetables',
+              'Other',
+            ],
+          },
         },
-        required: ['name', 'name_ua', 'quantity', 'unit'],
+        required: ['name', 'name_ua', 'quantity', 'unit', 'category'],
       },
     },
   },
@@ -126,6 +172,26 @@ export class ExtractionService {
     });
 
     this.logger.debug(`Audio extraction result: ${response.text}`);
+    return JSON.parse(response.text);
+  }
+
+  async parseQuantity(
+    text: string,
+    currentUnit: string,
+  ): Promise<{ valid: boolean; quantity: number; unit: string }> {
+    const ai = this.gemini.getClient();
+
+    const response = await ai.models.generateContent({
+      model: this.model,
+      contents: `current_unit: ${currentUnit}\nuser input: ${text}`,
+      config: {
+        systemInstruction: PARSE_QUANTITY_PROMPT,
+        responseMimeType: 'application/json',
+        responseSchema: PARSE_QUANTITY_SCHEMA,
+      },
+    });
+
+    this.logger.debug(`Parse quantity result: ${response.text}`);
     return JSON.parse(response.text);
   }
 }

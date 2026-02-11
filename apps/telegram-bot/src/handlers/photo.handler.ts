@@ -1,12 +1,37 @@
 import { Bot, Keyboard } from 'grammy';
 import { ApiClient } from '../api-client/api-client';
-import { ingestImage, ingestText } from '../api-client/ingestion.api';
+import { previewImage, previewText } from '../api-client/confirmation.api';
 import { formatIngestionResult } from '../formatters/ingestion.formatter';
+import {
+  formatPreview,
+  buildPreviewKeyboard,
+} from '../formatters/confirmation.formatter';
+import { cachePreview } from './confirmation.handler';
 import { BotContext } from '../middleware/auth';
 import { t } from '../i18n/locales';
 import { downloadTelegramFile } from '../utils/file-download';
 import { logger } from '../utils/logger';
 import { config } from '../config';
+import { ExtractionPreview } from '../api-client/types';
+
+function sendPreview(
+  ctx: BotContext & { lang: 'ua' | 'en'; internalUserId?: string },
+  preview: ExtractionPreview,
+) {
+  const { shortId, itemIdMap, candidateIdMap } = cachePreview(
+    preview,
+    ctx.internalUserId!,
+  );
+  const text = formatPreview(preview, ctx.lang);
+  const kb = buildPreviewKeyboard(
+    preview,
+    shortId,
+    itemIdMap,
+    candidateIdMap,
+    ctx.lang,
+  );
+  return ctx.reply(text, { parse_mode: 'HTML', reply_markup: kb });
+}
 
 export function registerPhotoHandler(
   bot: Bot<BotContext>,
@@ -43,25 +68,62 @@ export function registerPhotoHandler(
       const ext = file.file_path.split('.').pop() || 'jpg';
       const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
 
-      const result = await ingestImage(
+      const preview = await previewImage(
         api,
         ctx.internalUserId!,
         buffer,
         `photo.${ext}`,
         mime,
       );
-      await ctx.reply(formatIngestionResult(result, ctx.lang), {
-        parse_mode: 'HTML',
-      });
 
-      // Process caption as separate text ingestion
+      // CLEAR_ALL
+      if (preview.intent === 'CLEAR_ALL') {
+        const fakeResult = {
+          status: 'completed' as const,
+          processed_items: [],
+          clarifications: [],
+          transaction_ids: [],
+          cleared_count: preview.cleared_count,
+        };
+        await ctx.reply(formatIngestionResult(fakeResult, ctx.lang), {
+          parse_mode: 'HTML',
+        });
+      } else if (
+        preview.items.length === 0 &&
+        preview.clarifications.length === 0
+      ) {
+        await ctx.reply(t(ctx.lang, 'no_items_found'));
+      } else {
+        await sendPreview(ctx, preview);
+      }
+
+      // Process caption as separate text preview
       const caption = ctx.message.caption;
       if (caption) {
         await ctx.replyWithChatAction('typing');
-        const textResult = await ingestText(api, ctx.internalUserId!, caption);
-        await ctx.reply(formatIngestionResult(textResult, ctx.lang), {
-          parse_mode: 'HTML',
-        });
+        const textPreview = await previewText(
+          api,
+          ctx.internalUserId!,
+          caption,
+        );
+
+        if (textPreview.intent === 'CLEAR_ALL') {
+          const fakeResult = {
+            status: 'completed' as const,
+            processed_items: [],
+            clarifications: [],
+            transaction_ids: [],
+            cleared_count: textPreview.cleared_count,
+          };
+          await ctx.reply(formatIngestionResult(fakeResult, ctx.lang), {
+            parse_mode: 'HTML',
+          });
+        } else if (
+          textPreview.items.length > 0 ||
+          textPreview.clarifications.length > 0
+        ) {
+          await sendPreview(ctx, textPreview);
+        }
       }
     } catch (err) {
       logger.error('Failed to process photo', err);

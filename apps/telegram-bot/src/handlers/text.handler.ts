@@ -1,7 +1,12 @@
 import { Bot, Keyboard } from 'grammy';
 import { ApiClient } from '../api-client/api-client';
-import { ingestText } from '../api-client/ingestion.api';
+import { previewText } from '../api-client/confirmation.api';
 import { formatIngestionResult } from '../formatters/ingestion.formatter';
+import {
+  formatPreview,
+  buildPreviewKeyboard,
+} from '../formatters/confirmation.formatter';
+import { cachePreview } from './confirmation.handler';
 import { BotContext } from '../middleware/auth';
 import { t } from '../i18n/locales';
 import { logger } from '../utils/logger';
@@ -27,13 +32,50 @@ export function registerTextHandler(
 
     try {
       await ctx.replyWithChatAction('typing');
-      const result = await ingestText(
+      const preview = await previewText(
         api,
         ctx.internalUserId!,
         ctx.message.text,
       );
-      await ctx.reply(formatIngestionResult(result, ctx.lang), {
+
+      // CLEAR_ALL — processed immediately, show result
+      if (preview.intent === 'CLEAR_ALL') {
+        const fakeResult = {
+          status: 'completed' as const,
+          processed_items: [],
+          clarifications: [],
+          transaction_ids: [],
+          cleared_count: preview.cleared_count,
+        };
+        await ctx.reply(formatIngestionResult(fakeResult, ctx.lang), {
+          parse_mode: 'HTML',
+        });
+        return;
+      }
+
+      // No items detected
+      if (preview.items.length === 0 && preview.clarifications.length === 0) {
+        await ctx.reply(t(ctx.lang, 'no_items_found'));
+        return;
+      }
+
+      // Show preview with inline keyboard
+      const { shortId, itemIdMap, candidateIdMap } = cachePreview(
+        preview,
+        ctx.internalUserId!,
+      );
+      const text = formatPreview(preview, ctx.lang);
+      const kb = buildPreviewKeyboard(
+        preview,
+        shortId,
+        itemIdMap,
+        candidateIdMap,
+        ctx.lang,
+      );
+
+      await ctx.reply(text, {
         parse_mode: 'HTML',
+        reply_markup: kb,
       });
     } catch (err) {
       logger.error('Failed to process text', err);

@@ -14,9 +14,9 @@ const CATEGORY_EMOJI: Record<string, string> = {
   grains: '🌾',
   bakery: '🍞',
   bread: '🍞',
-  beverage: '🥤',
-  beverages: '🥤',
-  drinks: '🥤',
+  beverage: '🍵',
+  beverages: '🍵',
+  drinks: '🍵',
   spice: '🧂',
   spices: '🧂',
   condiment: '🫙',
@@ -31,6 +31,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   'meat & poultry': '🥩',
   'oils & condiments': '🫙',
   'spices & seasonings': '🧂',
+  'snacks & sweets': '🍦',
 };
 
 const STATUS_INDICATOR: Record<string, string> = {

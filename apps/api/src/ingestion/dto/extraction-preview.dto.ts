@@ -1,3 +1,11 @@
+export interface UnitConflict {
+  existing_unit: string;
+  existing_quantity: number;
+  ai_estimate_quantity: number;
+  ai_estimate_combined: number;
+  resolution: 'combine' | 'separate' | null;
+}
+
 export interface PreviewItem {
   id: string;
   raw_name: string;
@@ -7,6 +15,7 @@ export interface PreviewItem {
   quantity: number;
   unit: string;
   confidence: number;
+  unit_conflict?: UnitConflict;
 }
 
 export interface PreviewClarification {

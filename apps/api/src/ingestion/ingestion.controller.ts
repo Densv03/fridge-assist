@@ -19,6 +19,7 @@ import {
   AddCustomItemDto,
   ReplacePreviewItemDto,
   ChangeAmountDto,
+  ResolveUnitConflictDto,
 } from './dto/confirm-items.dto';
 import { UserId } from '../common/pipes/parse-user-id.pipe';
 import { UserExistsGuard } from '../common/guards/user-exists.guard';
@@ -219,6 +220,19 @@ export class IngestionController {
       dto.preview_id,
       dto.item_id,
       dto.text,
+    );
+  }
+
+  @Post('preview/resolve-unit-conflict')
+  resolveUnitConflict(
+    @UserId() userId: string,
+    @Body() dto: ResolveUnitConflictDto,
+  ) {
+    return this.ingestionService.resolveUnitConflict(
+      userId,
+      dto.preview_id,
+      dto.item_id,
+      dto.resolution,
     );
   }
 }

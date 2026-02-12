@@ -8,6 +8,7 @@ import {
   addCustomItem,
   replacePreviewItem,
   changePreviewItemAmount,
+  resolveUnitConflict,
 } from '../api-client/confirmation.api';
 import { ExtractionPreview } from '../api-client/types';
 import {
@@ -492,6 +493,120 @@ export function registerConfirmationHandler(
     });
 
     await ctx.answerCallbackQuery();
+  });
+
+  // ── Resolve unit conflict: Combine ──
+  bot.callbackQuery(/^ucmb:([^:]+):(.+)$/, async (ctx) => {
+    const sid = ctx.match![1];
+    const itemShort = ctx.match![2];
+    const cached = previewCache.get(sid);
+
+    if (!cached) {
+      await ctx.answerCallbackQuery(t(ctx.lang, 'preview_expired'));
+      return;
+    }
+
+    const fullItemId = cached.itemIdMap.get(itemShort);
+    if (!fullItemId) {
+      await ctx.answerCallbackQuery(t(ctx.lang, 'confirm_error'));
+      return;
+    }
+
+    try {
+      const updated = await resolveUnitConflict(
+        api,
+        cached.userId,
+        cached.previewId,
+        fullItemId,
+        'combine',
+      );
+
+      const {
+        shortId: newSid,
+        itemIdMap,
+        candidateIdMap,
+      } = rebuildCache(sid, updated, cached.userId);
+
+      const text = formatPreview(updated, ctx.lang);
+      const kb = buildPreviewKeyboard(
+        updated,
+        newSid,
+        itemIdMap,
+        candidateIdMap,
+        ctx.lang,
+      );
+
+      await ctx.editMessageText(text, {
+        parse_mode: 'HTML',
+        reply_markup: kb,
+      });
+      await ctx.answerCallbackQuery();
+    } catch (err: any) {
+      logger.error('Failed to resolve unit conflict (combine)', err);
+      if (err?.response?.status === 410) {
+        await ctx.answerCallbackQuery(t(ctx.lang, 'preview_expired'));
+        previewCache.delete(sid);
+      } else {
+        await ctx.answerCallbackQuery(t(ctx.lang, 'confirm_error'));
+      }
+    }
+  });
+
+  // ── Resolve unit conflict: Separate ──
+  bot.callbackQuery(/^usep:([^:]+):(.+)$/, async (ctx) => {
+    const sid = ctx.match![1];
+    const itemShort = ctx.match![2];
+    const cached = previewCache.get(sid);
+
+    if (!cached) {
+      await ctx.answerCallbackQuery(t(ctx.lang, 'preview_expired'));
+      return;
+    }
+
+    const fullItemId = cached.itemIdMap.get(itemShort);
+    if (!fullItemId) {
+      await ctx.answerCallbackQuery(t(ctx.lang, 'confirm_error'));
+      return;
+    }
+
+    try {
+      const updated = await resolveUnitConflict(
+        api,
+        cached.userId,
+        cached.previewId,
+        fullItemId,
+        'separate',
+      );
+
+      const {
+        shortId: newSid,
+        itemIdMap,
+        candidateIdMap,
+      } = rebuildCache(sid, updated, cached.userId);
+
+      const text = formatPreview(updated, ctx.lang);
+      const kb = buildPreviewKeyboard(
+        updated,
+        newSid,
+        itemIdMap,
+        candidateIdMap,
+        ctx.lang,
+      );
+
+      await ctx.editMessageText(text, {
+        parse_mode: 'HTML',
+        reply_markup: kb,
+      });
+      await ctx.answerCallbackQuery();
+    } catch (err: any) {
+      logger.error('Failed to resolve unit conflict (separate)', err);
+      if (err?.response?.status === 410) {
+        await ctx.answerCallbackQuery(t(ctx.lang, 'preview_expired'));
+        previewCache.delete(sid);
+      } else {
+        await ctx.answerCallbackQuery(t(ctx.lang, 'confirm_error'));
+      }
+    }
   });
 
   // ── Handle custom item / replace item / change amount text input ──

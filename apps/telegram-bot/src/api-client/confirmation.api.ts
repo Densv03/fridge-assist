@@ -161,3 +161,18 @@ export async function changePreviewItemAmount(
   );
   return data;
 }
+
+export async function resolveUnitConflict(
+  api: ApiClient,
+  userId: string,
+  previewId: string,
+  itemId: string,
+  resolution: 'combine' | 'separate',
+): Promise<ExtractionPreview> {
+  const { data } = await api.post<ExtractionPreview>(
+    '/ingestion/preview/resolve-unit-conflict',
+    { preview_id: previewId, item_id: itemId, resolution },
+    { headers: { 'x-user-id': userId } },
+  );
+  return data;
+}

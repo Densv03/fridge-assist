@@ -31,6 +31,24 @@ Rules:
   Examples: "Milk" → "Dairy & Eggs", "Apple" → "Fruits", "Chicken" → "Meat & Poultry", "Tea" → "Beverages", "Ice Cream" → "Snacks & Sweets", "Rice" → "Grains & Pasta", "Bread" → "Bakery"
 - Non-food items should be ignored`;
 
+const CONVERT_UNIT_PROMPT = `You are a kitchen assistant that converts food quantities between units.
+Given an ingredient name, a quantity, and the source and target units, estimate the conversion using average weight/size for that ingredient.
+
+Rules:
+- Use your knowledge of average food item sizes and weights
+- For example: 1 avocado (pcs) ≈ 200g, 1 egg (pcs) ≈ 60g, 1 banana (pcs) ≈ 120g
+- Return the converted quantity as a number rounded to 2 decimal places
+- If conversion is impossible or nonsensical, return quantity 0`;
+
+const CONVERT_UNIT_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    quantity: { type: Type.NUMBER },
+    unit: { type: Type.STRING },
+  },
+  required: ['quantity', 'unit'],
+};
+
 const PARSE_QUANTITY_PROMPT = `You are a quantity parser for a kitchen inventory app.
 Parse the user's free-form text into a structured quantity and unit.
 
@@ -172,6 +190,30 @@ export class ExtractionService {
     });
 
     this.logger.debug(`Audio extraction result: ${response.text}`);
+    return JSON.parse(response.text);
+  }
+
+  async convertUnit(
+    quantity: number,
+    fromUnit: string,
+    toUnit: string,
+    ingredientName: string,
+  ): Promise<{ quantity: number; unit: string }> {
+    const ai = this.gemini.getClient();
+
+    const prompt = `Convert ${quantity} ${fromUnit} of ${ingredientName} to ${toUnit}. Use average weight/size for this ingredient.`;
+
+    const response = await ai.models.generateContent({
+      model: this.model,
+      contents: prompt,
+      config: {
+        systemInstruction: CONVERT_UNIT_PROMPT,
+        responseMimeType: 'application/json',
+        responseSchema: CONVERT_UNIT_SCHEMA,
+      },
+    });
+
+    this.logger.debug(`Convert unit result: ${response.text}`);
     return JSON.parse(response.text);
   }
 

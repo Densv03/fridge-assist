@@ -72,6 +72,13 @@ const strings: Record<Lang, Record<string, string>> = {
     change_amount_invalid: '❌ Не вдалося розпізнати кількість. Спробуйте ще раз, напр. 500г, 2 кг, пів літра',
     preview_confidence_legend: '🟢 точний збіг · 🟡 ймовірний збіг · 🟠 приблизний збіг',
 
+    // unit conflict
+    unit_conflict_label: '(зараз у холодильнику: {qty} {unit})',
+    unit_conflict_combine_btn: '🤖 Об\'єднати (≈ {combined} {unit})',
+    unit_conflict_separate_btn: '📋 Окремо',
+    unit_conflict_combined_note: '(об\'єднано з {qty} {unit})',
+    unit_conflict_separated_note: '(окремо)',
+
     // help
     help_title: '📖 <b>Доступні команди:</b>\n',
     help_commands:
@@ -152,6 +159,13 @@ const strings: Record<Lang, Record<string, string>> = {
     change_amount_done: '✅ Amount updated',
     change_amount_invalid: "❌ Couldn't recognize a quantity. Try again, e.g. 500g, 2 kg, half a liter",
     preview_confidence_legend: '🟢 exact match · 🟡 likely match · 🟠 approximate match',
+
+    // unit conflict
+    unit_conflict_label: '(currently in fridge: {qty} {unit})',
+    unit_conflict_combine_btn: '🤖 Combine (≈ {combined} {unit})',
+    unit_conflict_separate_btn: '📋 Separate',
+    unit_conflict_combined_note: '(combined with {qty} {unit})',
+    unit_conflict_separated_note: '(separate)',
 
     // help
     help_title: '📖 <b>Available commands:</b>\n',

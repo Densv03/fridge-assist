@@ -1,6 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 import { ExtractionPreview } from '../api-client/types';
 import { Lang, t, localizeUnit } from '../i18n/locales';
+import { formatForDisplay } from '../utils/unit-display';
 
 const ACTION_EMOJI: Record<string, string> = {
   ADD: '➕',
@@ -29,18 +30,45 @@ export function formatPreview(preview: ExtractionPreview, lang: Lang): string {
       lang === 'ua'
         ? item.canonical_name_ua || item.canonical_name
         : item.canonical_name;
-    const unit = localizeUnit(item.unit, lang);
-    const badge = confidenceBadge(item.confidence);
-    if (item.confidence < 1.0) hasLowConfidence = true;
-    lines.push(`${badge} <b>${name}</b> — ${item.quantity} ${unit}`);
+    const display = formatForDisplay(item.quantity, item.unit);
+    const unit = localizeUnit(display.unit, lang);
+    const conflict = item.unit_conflict;
+
+    if (conflict && !conflict.resolution) {
+      // Unresolved conflict — show warning badge
+      const existingUnit = localizeUnit(conflict.existing_unit, lang);
+      const conflictLabel = t(lang, 'unit_conflict_label')
+        .replace('{qty}', String(conflict.existing_quantity))
+        .replace('{unit}', existingUnit);
+      lines.push(`⚠️ <b>${name}</b> — ${display.quantity} ${unit}`);
+      lines.push(`   ${conflictLabel}`);
+    } else if (conflict?.resolution === 'combine') {
+      const existingUnit = localizeUnit(conflict.existing_unit, lang);
+      const note = t(lang, 'unit_conflict_combined_note')
+        .replace('{qty}', String(conflict.existing_quantity))
+        .replace('{unit}', existingUnit);
+      const badge = confidenceBadge(item.confidence);
+      if (item.confidence < 1.0) hasLowConfidence = true;
+      lines.push(`${badge} <b>${name}</b> — ${display.quantity} ${unit} ${note}`);
+    } else if (conflict?.resolution === 'separate') {
+      const note = t(lang, 'unit_conflict_separated_note');
+      const badge = confidenceBadge(item.confidence);
+      if (item.confidence < 1.0) hasLowConfidence = true;
+      lines.push(`${badge} <b>${name}</b> — ${display.quantity} ${unit} ${note}`);
+    } else {
+      const badge = confidenceBadge(item.confidence);
+      if (item.confidence < 1.0) hasLowConfidence = true;
+      lines.push(`${badge} <b>${name}</b> — ${display.quantity} ${unit}`);
+    }
   }
 
   if (preview.clarifications.length > 0) {
     if (preview.items.length > 0) lines.push('');
     lines.push(`❓ ${t(lang, 'preview_clarification_note')}`);
     for (const c of preview.clarifications) {
-      const unit = localizeUnit(c.unit, lang);
-      lines.push(`• <b>${c.raw_name}</b> — ${c.quantity} ${unit}`);
+      const display = formatForDisplay(c.quantity, c.unit);
+      const unit = localizeUnit(display.unit, lang);
+      lines.push(`• <b>${c.raw_name}</b> — ${display.quantity} ${unit}`);
     }
   }
 
@@ -71,17 +99,37 @@ export function buildPreviewKeyboard(
     candidateShortMap.set(full, short);
   }
 
-  // Per matched item: remove + replace buttons
+  // Check if any item has an unresolved unit conflict
+  const hasUnresolvedConflict = preview.items.some(
+    (item) => item.unit_conflict && !item.unit_conflict.resolution,
+  );
+
+  // Per matched item: show conflict buttons or normal buttons
   for (const item of preview.items) {
     const itemShort = itemShortMap.get(item.id) ?? item.id.slice(0, 8);
-    const name =
-      lang === 'ua'
-        ? item.canonical_name_ua || item.canonical_name
-        : item.canonical_name;
-    kb.text(`❌ ${name}`, `rm:${shortId}:${itemShort}`)
-      .text('✏️', `rpl:${shortId}:${itemShort}`)
-      .text('🔢', `qty:${shortId}:${itemShort}`)
-      .row();
+    const conflict = item.unit_conflict;
+
+    if (conflict && !conflict.resolution) {
+      // Unresolved conflict — show combine/separate buttons
+      const existingUnit = localizeUnit(conflict.existing_unit, lang);
+      const combineLabel = t(lang, 'unit_conflict_combine_btn')
+        .replace('{combined}', String(Math.round(conflict.ai_estimate_combined * 100) / 100))
+        .replace('{unit}', existingUnit);
+      const separateLabel = t(lang, 'unit_conflict_separate_btn');
+
+      kb.text(combineLabel, `ucmb:${shortId}:${itemShort}`).row();
+      kb.text(separateLabel, `usep:${shortId}:${itemShort}`).row();
+    } else {
+      // Normal buttons: remove + replace + change amount
+      const name =
+        lang === 'ua'
+          ? item.canonical_name_ua || item.canonical_name
+          : item.canonical_name;
+      kb.text(`❌ ${name}`, `rm:${shortId}:${itemShort}`)
+        .text('✏️', `rpl:${shortId}:${itemShort}`)
+        .text('🔢', `qty:${shortId}:${itemShort}`)
+        .row();
+    }
   }
 
   // Per ambiguous item: candidate buttons + custom
@@ -100,9 +148,11 @@ export function buildPreviewKeyboard(
     kb.row();
   }
 
-  // Bottom row: confirm + cancel
-  kb.text(t(lang, 'btn_confirm'), `cfm:${shortId}`)
-    .text(t(lang, 'btn_cancel'), `cxl:${shortId}`);
+  // Bottom row: confirm (hidden if unresolved conflicts) + cancel
+  if (!hasUnresolvedConflict) {
+    kb.text(t(lang, 'btn_confirm'), `cfm:${shortId}`);
+  }
+  kb.text(t(lang, 'btn_cancel'), `cxl:${shortId}`);
 
   return kb;
 }

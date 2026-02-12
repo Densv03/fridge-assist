@@ -1,6 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
 import { InventoryStatus } from '../common/enums/inventory-status.enum';
+import {
+  areUnitsCompatible,
+  convertQuantity,
+} from '../common/utils/unit-conversion';
 
 @Injectable()
 export class InventoryService {
@@ -46,47 +50,53 @@ export class InventoryService {
   ) {
     const client = this.supabase.getClient();
 
-    // Try to find existing inventory row
-    const { data: existing } = await client
+    // Query ALL rows for this user + ingredient
+    const { data: rows } = await client
       .from('user_inventory')
-      .select('id, quantity')
+      .select('id, quantity, unit')
       .eq('user_id', userId)
-      .eq('ingredient_id', ingredientId)
-      .single();
+      .eq('ingredient_id', ingredientId);
 
-    let newQuantity: number;
+    // Find a row with a compatible unit group
+    const compatibleRow = (rows ?? []).find((r) =>
+      areUnitsCompatible(r.unit, unit),
+    );
 
-    if (existing) {
-      newQuantity = Math.max(0, Number(existing.quantity) + quantityChange);
+    if (compatibleRow) {
+      // Convert incoming quantity to stored unit
+      const converted = convertQuantity(quantityChange, unit, compatibleRow.unit);
+      const delta = converted ?? quantityChange;
+      const newQuantity = Math.max(0, Number(compatibleRow.quantity) + delta);
 
       if (newQuantity <= 0) {
         const { error } = await client
           .from('user_inventory')
           .delete()
-          .eq('id', existing.id);
+          .eq('id', compatibleRow.id);
         if (error) throw error;
         this.logger.log(
-          `Removed inventory ${existing.id} (quantity reached 0) for user ${userId}`,
+          `Removed inventory ${compatibleRow.id} (quantity reached 0) for user ${userId}`,
         );
-        return { id: existing.id, quantity: 0, unit, status: 'Out of Stock' };
+        return { id: compatibleRow.id, quantity: 0, unit: compatibleRow.unit, status: 'Out of Stock' };
       }
 
       const newStatus = this.computeStatus(newQuantity);
 
       const { data, error } = await client
         .from('user_inventory')
-        .update({ quantity: newQuantity, unit, status: newStatus })
-        .eq('id', existing.id)
+        .update({ quantity: newQuantity, status: newStatus })
+        .eq('id', compatibleRow.id)
         .select()
         .single();
 
       if (error) throw error;
       this.logger.log(
-        `Adjusted inventory ${existing.id} by ${quantityChange} ${unit} for user ${userId}`,
+        `Adjusted inventory ${compatibleRow.id} by ${quantityChange} ${unit} (stored as ${compatibleRow.unit}) for user ${userId}`,
       );
       return data;
     } else {
-      newQuantity = Math.max(0, quantityChange);
+      // No compatible row — insert new row with the incoming unit
+      const newQuantity = Math.max(0, quantityChange);
       const newStatus = this.computeStatus(newQuantity);
 
       const { data, error } = await client
@@ -103,7 +113,7 @@ export class InventoryService {
 
       if (error) throw error;
       this.logger.log(
-        `Adjusted inventory ${data.id} by ${quantityChange} ${unit} for user ${userId}`,
+        `Created new inventory ${data.id} with ${quantityChange} ${unit} for user ${userId}`,
       );
       return data;
     }

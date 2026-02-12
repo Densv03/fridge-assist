@@ -1,5 +1,6 @@
 import { InventoryItem } from '../api-client/types';
 import { Lang, t, localizeUnit, localizeCategory } from '../i18n/locales';
+import { formatForDisplay } from '../utils/unit-display';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   fruit: '🍎',
@@ -73,8 +74,9 @@ export function formatInventoryList(items: InventoryItem[], lang: Lang): string 
             item.master_ingredients?.canonical_name ||
             'Unknown'
           : item.master_ingredients?.canonical_name || 'Unknown';
-      const unit = localizeUnit(item.unit, lang);
-      lines.push(`  ${status} ${name} — ${item.quantity} ${unit}`);
+      const display = formatForDisplay(item.quantity, item.unit);
+      const unit = localizeUnit(display.unit, lang);
+      lines.push(`  ${status} ${name} — ${display.quantity} ${unit}`);
     }
 
     lines.push('');

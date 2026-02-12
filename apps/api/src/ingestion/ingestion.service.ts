@@ -22,7 +22,9 @@ import {
   ExtractionPreview,
   PreviewItem,
   PreviewClarification,
+  UnitConflict,
 } from './dto/extraction-preview.dto';
+import { areUnitsCompatible } from '../common/utils/unit-conversion';
 
 @Injectable()
 export class IngestionService {
@@ -274,10 +276,59 @@ export class IngestionService {
       status: string;
       candidates: unknown;
       confidence: number | null;
+      unit_conflict: UnitConflict | null;
     }> = [];
 
     const allMatched = [...normalized.matched, ...normalized.created];
     for (const item of allMatched) {
+      let unitConflict: UnitConflict | null = null;
+
+      // Check for unit conflicts with existing inventory
+      if (item.ingredient_id && extracted.intent === 'ADD') {
+        const { data: existingRows } = await client
+          .from('user_inventory')
+          .select('quantity, unit')
+          .eq('user_id', userId)
+          .eq('ingredient_id', item.ingredient_id);
+
+        if (existingRows && existingRows.length > 0) {
+          // Check if any existing row has an incompatible unit
+          const hasCompatible = existingRows.some((r) =>
+            areUnitsCompatible(r.unit, item.unit),
+          );
+          if (!hasCompatible) {
+            // Incompatible units — get AI estimate
+            const existing = existingRows[0];
+            try {
+              const aiResult = await this.extraction.convertUnit(
+                item.quantity,
+                item.unit,
+                existing.unit,
+                item.canonical_name,
+              );
+              unitConflict = {
+                existing_unit: existing.unit,
+                existing_quantity: Number(existing.quantity),
+                ai_estimate_quantity: aiResult.quantity,
+                ai_estimate_combined: Number(existing.quantity) + aiResult.quantity,
+                resolution: null,
+              };
+            } catch (err) {
+              this.logger.warn(
+                `AI unit conversion failed for ${item.name}: ${err}`,
+              );
+              unitConflict = {
+                existing_unit: existing.unit,
+                existing_quantity: Number(existing.quantity),
+                ai_estimate_quantity: 0,
+                ai_estimate_combined: Number(existing.quantity),
+                resolution: null,
+              };
+            }
+          }
+        }
+      }
+
       itemRows.push({
         preview_id: preview.id,
         raw_name: item.name,
@@ -289,6 +340,7 @@ export class IngestionService {
         status: 'matched',
         candidates: [],
         confidence: item.similarity,
+        unit_conflict: unitConflict,
       });
     }
 
@@ -308,6 +360,7 @@ export class IngestionService {
           canonical_name_ua: c.canonical_name_ua,
         })),
         confidence: null,
+        unit_conflict: null,
       });
     }
 
@@ -822,6 +875,76 @@ export class IngestionService {
     return this.loadPreview(userId, previewId);
   }
 
+  async resolveUnitConflict(
+    userId: string,
+    previewId: string,
+    itemId: string,
+    resolution: 'combine' | 'separate',
+  ): Promise<ExtractionPreview> {
+    const client = this.supabase.getClient();
+
+    // Validate ownership + pending + not expired
+    const { data: preview, error: previewError } = await client
+      .from('extraction_previews')
+      .select('id, user_id, status, expires_at')
+      .eq('id', previewId)
+      .eq('user_id', userId)
+      .single();
+
+    if (previewError || !preview) {
+      throw new NotFoundException('Preview not found');
+    }
+    if (preview.status !== 'pending') {
+      throw new BadRequestException(`Preview already ${preview.status}`);
+    }
+    if (new Date(preview.expires_at) < new Date()) {
+      throw new GoneException('Preview has expired');
+    }
+
+    // Load the item
+    const { data: item, error: itemError } = await client
+      .from('extraction_preview_items')
+      .select('*')
+      .eq('id', itemId)
+      .eq('preview_id', previewId)
+      .single();
+
+    if (itemError || !item) {
+      throw new NotFoundException('Preview item not found');
+    }
+
+    const conflict = item.unit_conflict as UnitConflict | null;
+    if (!conflict) {
+      throw new BadRequestException('No unit conflict on this item');
+    }
+
+    if (resolution === 'combine') {
+      // Update preview item: use AI-estimated quantity in existing unit
+      const { error: updateError } = await client
+        .from('extraction_preview_items')
+        .update({
+          quantity: conflict.ai_estimate_quantity,
+          unit: conflict.existing_unit,
+          unit_conflict: { ...conflict, resolution: 'combine' },
+        })
+        .eq('id', itemId);
+
+      if (updateError) throw updateError;
+    } else {
+      // Keep preview item as-is (original unit/quantity), just mark resolution
+      const { error: updateError } = await client
+        .from('extraction_preview_items')
+        .update({
+          unit_conflict: { ...conflict, resolution: 'separate' },
+        })
+        .eq('id', itemId);
+
+      if (updateError) throw updateError;
+    }
+
+    return this.loadPreview(userId, previewId);
+  }
+
   private async loadPreview(
     userId: string,
     previewId: string,
@@ -861,6 +984,7 @@ export class IngestionService {
           quantity: Number(row.quantity),
           unit: row.unit,
           confidence: row.confidence ?? 1.0,
+          unit_conflict: row.unit_conflict ?? undefined,
         });
       } else {
         clarifications.push({

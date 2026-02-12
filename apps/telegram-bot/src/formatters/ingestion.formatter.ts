@@ -1,5 +1,6 @@
 import { ProcessResult } from '../api-client/types';
 import { Lang, t, localizeUnit } from '../i18n/locales';
+import { formatForDisplay } from '../utils/unit-display';
 
 const ACTION_EMOJI: Record<string, string> = {
   ADD: '➕',
@@ -33,8 +34,9 @@ export function formatIngestionResult(result: ProcessResult, lang: Lang): string
         lang === 'ua'
           ? item.canonical_name_ua || item.canonical_name
           : item.canonical_name;
-      const unit = localizeUnit(item.unit, lang);
-      lines.push(`${emoji} <b>${name}</b> — ${item.quantity} ${unit}`);
+      const display = formatForDisplay(item.quantity, item.unit);
+      const unit = localizeUnit(display.unit, lang);
+      lines.push(`${emoji} <b>${name}</b> — ${display.quantity} ${unit}`);
     }
   }
 
@@ -49,8 +51,9 @@ export function formatIngestionResult(result: ProcessResult, lang: Lang): string
             : o.canonical_name,
         )
         .join(', ');
-      const unit = localizeUnit(c.unit, lang);
-      lines.push(`• <b>${c.raw_name}</b> (${c.quantity} ${unit})`);
+      const cDisplay = formatForDisplay(c.quantity, c.unit);
+      const unit = localizeUnit(cDisplay.unit, lang);
+      lines.push(`• <b>${c.raw_name}</b> (${cDisplay.quantity} ${unit})`);
       lines.push(`  ${t(lang, 'did_you_mean').replace('{options}', options)}`);
     }
   }

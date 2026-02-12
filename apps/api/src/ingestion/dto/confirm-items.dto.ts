@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsIn } from 'class-validator';
 
 export class ConfirmPreviewDto {
   @IsString()
@@ -84,4 +84,18 @@ export class ChangeAmountDto {
   @IsString()
   @IsNotEmpty()
   text: string;
+}
+
+export class ResolveUnitConflictDto {
+  @IsString()
+  @IsNotEmpty()
+  preview_id: string;
+
+  @IsString()
+  @IsNotEmpty()
+  item_id: string;
+
+  @IsString()
+  @IsIn(['combine', 'separate'])
+  resolution: 'combine' | 'separate';
 }

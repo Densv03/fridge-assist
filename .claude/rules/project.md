@@ -15,6 +15,7 @@ Fridge Assist is a personal fridge management app. Users photograph or describe 
 ## Architecture
 
 - **Telegram Bot** — user-facing interface, handles commands and messages, calls the API over HTTP
+- **Web App** — browser SPA with the same fridge management features, React + Vite + Tailwind with Liquid Glass design
 - **API** — backend logic, AI processing, database operations
 - **Supabase** — Postgres database and auth infrastructure
 - **Gemini AI** — ingredient extraction from photos/text, recipe suggestions

@@ -1,6 +1,6 @@
 # Fridge Assist
 
-Nx monorepo with two apps that help users manage fridge inventory and get recipe suggestions.
+Nx monorepo with three apps that help users manage fridge inventory and get recipe suggestions.
 
 ## Apps
 
@@ -8,16 +8,21 @@ Nx monorepo with two apps that help users manage fridge inventory and get recipe
 |-----|------|-------|
 | **API** | `apps/api` | NestJS + Supabase + Google Gemini |
 | **Telegram Bot** | `apps/telegram-bot` | grammy + axios |
+| **Web** | `apps/web` | React 18 + Vite + Tailwind + shadcn/ui |
 
 ## Commands
 
 ```bash
 npx nx build api              # Build API
 npx nx build telegram-bot     # Build bot
+npx nx build web              # Build web app
 npx nx serve api              # Dev server (http://localhost:3000/api)
 npx nx serve telegram-bot     # Dev bot (long polling)
+npx nx serve web              # Dev web (http://localhost:4200)
+npx nx test web               # Run web tests (Vitest)
 npx nx lint api               # Lint API
 npx nx lint telegram-bot      # Lint bot
+npx nx lint web               # Lint web
 ```
 
 ## Tech Stack
@@ -27,6 +32,7 @@ npx nx lint telegram-bot      # Lint bot
 - **Monorepo**: Nx 22
 - **API**: NestJS, Supabase (Postgres), Google Gemini AI, class-validator/class-transformer
 - **Bot**: grammy, axios, custom i18n (ua/en)
+- **Web**: React 18, Vite, Tailwind CSS, shadcn/ui, React Router, TanStack React Query, Framer Motion
 
 ## npm Cache Note
 

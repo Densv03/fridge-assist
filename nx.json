@@ -19,7 +19,19 @@
         "buildDepsTargetName": "build-deps",
         "watchDepsTargetName": "watch-deps",
         "serveStaticTargetName": "serve-static"
-      }
+      },
+      "include": ["apps/api/**", "apps/telegram-bot/**"]
+    },
+    {
+      "plugin": "@nx/vite/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "serveTargetName": "serve",
+        "previewTargetName": "preview",
+        "testTargetName": "test",
+        "serveStaticTargetName": "serve-static"
+      },
+      "include": ["apps/web/**"]
     },
     {
       "plugin": "@nx/eslint/plugin",

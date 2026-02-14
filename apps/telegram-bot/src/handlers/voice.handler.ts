@@ -12,6 +12,7 @@ import { t } from '../i18n/locales';
 import { downloadTelegramFile } from '../utils/file-download';
 import { logger } from '../utils/logger';
 import { config } from '../config';
+import { showLoading } from '../utils/loading';
 
 export function registerVoiceHandler(
   bot: Bot<BotContext>,
@@ -29,16 +30,17 @@ export function registerVoiceHandler(
       return;
     }
 
+    const hideLoading = await showLoading(ctx);
     try {
       const voice = ctx.message.voice;
       const file = await ctx.api.getFile(voice.file_id);
 
       if (!file.file_path) {
+        await hideLoading();
         await ctx.reply(t(ctx.lang, 'voice_download_error'));
         return;
       }
 
-      await ctx.replyWithChatAction('typing');
       const buffer = await downloadTelegramFile(
         file.file_path,
         config.telegramBotToken,
@@ -51,6 +53,7 @@ export function registerVoiceHandler(
         'voice.ogg',
         'audio/ogg',
       );
+      await hideLoading();
 
       // CLEAR_ALL
       if (preview.intent === 'CLEAR_ALL') {
@@ -92,6 +95,7 @@ export function registerVoiceHandler(
         reply_markup: kb,
       });
     } catch (err) {
+      await hideLoading();
       logger.error('Failed to process voice message', err);
       await ctx.reply(t(ctx.lang, 'voice_error'));
     }

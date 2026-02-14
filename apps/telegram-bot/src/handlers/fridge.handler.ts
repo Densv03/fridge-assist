@@ -5,6 +5,7 @@ import { formatInventoryList } from '../formatters/inventory.formatter';
 import { BotContext } from '../middleware/auth';
 import { t } from '../i18n/locales';
 import { logger } from '../utils/logger';
+import { showLoading } from '../utils/loading';
 
 export function registerFridgeHandler(
   bot: Bot<BotContext>,
@@ -22,12 +23,14 @@ export function registerFridgeHandler(
       return;
     }
 
+    const hideLoading = await showLoading(ctx);
     try {
-      await ctx.replyWithChatAction('typing');
       const items = await getInventory(api, ctx.internalUserId!);
+      await hideLoading();
       const message = formatInventoryList(items, ctx.lang);
       await ctx.reply(message, { parse_mode: 'HTML' });
     } catch (err) {
+      await hideLoading();
       logger.error('Failed to get inventory', err);
       await ctx.reply(t(ctx.lang, 'fridge_error'));
     }

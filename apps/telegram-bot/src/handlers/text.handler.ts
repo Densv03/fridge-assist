@@ -10,6 +10,7 @@ import { cachePreview } from './confirmation.handler';
 import { BotContext } from '../middleware/auth';
 import { t } from '../i18n/locales';
 import { logger } from '../utils/logger';
+import { showLoading } from '../utils/loading';
 
 export function registerTextHandler(
   bot: Bot<BotContext>,
@@ -30,13 +31,14 @@ export function registerTextHandler(
       return;
     }
 
+    const hideLoading = await showLoading(ctx);
     try {
-      await ctx.replyWithChatAction('typing');
       const preview = await previewText(
         api,
         ctx.internalUserId!,
         ctx.message.text,
       );
+      await hideLoading();
 
       // CLEAR_ALL — processed immediately, show result
       if (preview.intent === 'CLEAR_ALL') {
@@ -78,6 +80,7 @@ export function registerTextHandler(
         reply_markup: kb,
       });
     } catch (err) {
+      await hideLoading();
       logger.error('Failed to process text', err);
       await ctx.reply(t(ctx.lang, 'text_error'));
     }

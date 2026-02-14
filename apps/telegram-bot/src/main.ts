@@ -7,6 +7,7 @@ import { registerContactHandler } from './handlers/contact.handler';
 import { registerLangHandler } from './handlers/lang.handler';
 import { registerHelpHandler } from './handlers/help.handler';
 import { registerFridgeHandler } from './handlers/fridge.handler';
+import { registerCookHandler } from './handlers/cook.handler';
 import { registerConfirmationHandler } from './handlers/confirmation.handler';
 import { registerPhotoHandler } from './handlers/photo.handler';
 import { registerVoiceHandler } from './handlers/voice.handler';
@@ -25,6 +26,7 @@ registerContactHandler(bot, api);
 registerLangHandler(bot, api);
 registerHelpHandler(bot);
 registerFridgeHandler(bot, api);
+registerCookHandler(bot, api);
 registerConfirmationHandler(bot, api);
 registerPhotoHandler(bot, api);
 registerVoiceHandler(bot, api);
@@ -39,6 +41,7 @@ bot.catch((err) => {
 bot.api.setMyCommands([
   { command: 'start', description: 'Start / restart' },
   { command: 'fridge', description: 'Show inventory' },
+  { command: 'cook', description: 'What can I cook?' },
   { command: 'lang', description: 'Change language' },
   { command: 'help', description: 'Show help' },
 ]);

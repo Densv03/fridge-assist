@@ -94,3 +94,52 @@ export interface ExtractionPreview {
   clarifications: PreviewClarification[];
   cleared_count?: number;
 }
+
+// ── Recipe types ──
+
+export interface MissingIngredient {
+  name_en: string;
+  name_ua: string;
+}
+
+export interface RecipeSuggestion {
+  dish_name_en: string;
+  dish_name_ua: string;
+  category: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack' | 'Dessert' | 'Drink';
+  used_ingredients: string[];
+  missing_ingredients?: MissingIngredient[];
+}
+
+export interface RecipeSuggestionsResponse {
+  can_cook: RecipeSuggestion[];
+  need_to_buy: RecipeSuggestion[];
+  empty_fridge?: boolean;
+}
+
+export interface RecipeIngredient {
+  name_en: string;
+  name_ua: string;
+  quantity: string;
+  quantity_ua: string;
+  quantity_num: number;
+  unit: string;
+}
+
+export interface RecipeStep {
+  step_en: string;
+  step_ua: string;
+}
+
+export interface RecipeDetail {
+  dish_name_en: string;
+  dish_name_ua: string;
+  servings: number;
+  cook_time_minutes: number;
+  ingredients: RecipeIngredient[];
+  steps: RecipeStep[];
+}
+
+export interface ConsumeResult {
+  consumed: Array<{ name_en: string; quantity: number; unit: string }>;
+  skipped: string[];
+}

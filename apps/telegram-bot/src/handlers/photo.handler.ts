@@ -13,6 +13,7 @@ import { downloadTelegramFile } from '../utils/file-download';
 import { logger } from '../utils/logger';
 import { config } from '../config';
 import { ExtractionPreview } from '../api-client/types';
+import { showLoading } from '../utils/loading';
 
 function sendPreview(
   ctx: BotContext & { lang: 'ua' | 'en'; internalUserId?: string },
@@ -49,17 +50,18 @@ export function registerPhotoHandler(
       return;
     }
 
+    const hideLoading = await showLoading(ctx);
     try {
       const photos = ctx.message.photo;
       const largest = photos[photos.length - 1];
       const file = await ctx.api.getFile(largest.file_id);
 
       if (!file.file_path) {
+        await hideLoading();
         await ctx.reply(t(ctx.lang, 'photo_download_error'));
         return;
       }
 
-      await ctx.replyWithChatAction('upload_photo');
       const buffer = await downloadTelegramFile(
         file.file_path,
         config.telegramBotToken,
@@ -75,6 +77,7 @@ export function registerPhotoHandler(
         `photo.${ext}`,
         mime,
       );
+      await hideLoading();
 
       // CLEAR_ALL
       if (preview.intent === 'CLEAR_ALL') {
@@ -100,32 +103,39 @@ export function registerPhotoHandler(
       // Process caption as separate text preview
       const caption = ctx.message.caption;
       if (caption) {
-        await ctx.replyWithChatAction('typing');
-        const textPreview = await previewText(
-          api,
-          ctx.internalUserId!,
-          caption,
-        );
+        const hideCaptionLoading = await showLoading(ctx);
+        try {
+          const textPreview = await previewText(
+            api,
+            ctx.internalUserId!,
+            caption,
+          );
+          await hideCaptionLoading();
 
-        if (textPreview.intent === 'CLEAR_ALL') {
-          const fakeResult = {
-            status: 'completed' as const,
-            processed_items: [],
-            clarifications: [],
-            transaction_ids: [],
-            cleared_count: textPreview.cleared_count,
-          };
-          await ctx.reply(formatIngestionResult(fakeResult, ctx.lang), {
-            parse_mode: 'HTML',
-          });
-        } else if (
-          textPreview.items.length > 0 ||
-          textPreview.clarifications.length > 0
-        ) {
-          await sendPreview(ctx, textPreview);
+          if (textPreview.intent === 'CLEAR_ALL') {
+            const fakeResult = {
+              status: 'completed' as const,
+              processed_items: [],
+              clarifications: [],
+              transaction_ids: [],
+              cleared_count: textPreview.cleared_count,
+            };
+            await ctx.reply(formatIngestionResult(fakeResult, ctx.lang), {
+              parse_mode: 'HTML',
+            });
+          } else if (
+            textPreview.items.length > 0 ||
+            textPreview.clarifications.length > 0
+          ) {
+            await sendPreview(ctx, textPreview);
+          }
+        } catch (captionErr) {
+          await hideCaptionLoading();
+          throw captionErr;
         }
       }
     } catch (err) {
+      await hideLoading();
       logger.error('Failed to process photo', err);
       await ctx.reply(t(ctx.lang, 'photo_error'));
     }

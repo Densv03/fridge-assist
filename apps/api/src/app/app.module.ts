@@ -9,6 +9,7 @@ import { TransactionsModule } from '../transactions/transactions.module';
 import { IngestionModule } from '../ingestion/ingestion.module';
 import { UsersModule } from '../users/users.module';
 import { LogsModule } from '../logs/logs.module';
+import { RecipesModule } from '../recipes/recipes.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -26,6 +27,7 @@ import { AppService } from './app.service';
     InventoryModule,
     TransactionsModule,
     IngestionModule,
+    RecipesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

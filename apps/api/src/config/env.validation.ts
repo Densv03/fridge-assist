@@ -14,6 +14,10 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   GEMINI_API_KEY: string;
 
+  @IsString()
+  @IsNotEmpty()
+  SUPABASE_JWT_SECRET: string;
+
   @IsNumber()
   @IsOptional()
   PORT?: number;

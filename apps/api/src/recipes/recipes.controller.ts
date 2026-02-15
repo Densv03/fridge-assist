@@ -14,8 +14,9 @@ export class RecipesController {
     @Query('exclude') exclude?: string,
     @Query('mode') mode?: string,
     @Query('categories') categories?: string,
+    @Query('ingredients') ingredients?: string,
   ) {
-    const options: { exclude?: string[]; mode?: 'more' | 'creative'; categories?: string[] } = {};
+    const options: { exclude?: string[]; mode?: 'more' | 'creative'; categories?: string[]; ingredients?: string[] } = {};
     if (exclude) {
       options.exclude = exclude.split(',').map((s) => s.trim());
     }
@@ -24,6 +25,9 @@ export class RecipesController {
     }
     if (categories) {
       options.categories = categories.split(',').map((s) => s.trim());
+    }
+    if (ingredients) {
+      options.ingredients = ingredients.split(',').map((s) => s.trim());
     }
     return this.recipesService.getSuggestions(userId, options);
   }

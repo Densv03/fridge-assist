@@ -7,6 +7,7 @@ const ACTION_EMOJI: Record<string, string> = {
   ADD: '➕',
   CONSUME: '➖',
   WASTE: '🗑',
+  SET: '🔄',
   ADJUSTMENT: '🔄',
 };
 
@@ -18,9 +19,10 @@ function confidenceBadge(confidence: number): string {
 
 export function formatPreview(preview: ExtractionPreview, lang: Lang): string {
   const lines: string[] = [];
-  const emoji = ACTION_EMOJI[preview.intent] || '📋';
+  const titleKey = preview.intent === 'SET' ? 'preview_title_set' : 'preview_title';
+  const emoji = preview.intent === 'SET' ? '' : (ACTION_EMOJI[preview.intent] || '📋') + ' ';
 
-  lines.push(`${emoji} ${t(lang, 'preview_title')}`);
+  lines.push(`${emoji}${t(lang, titleKey)}`);
   lines.push('');
 
   let hasLowConfidence = false;

@@ -37,6 +37,7 @@ interface CachedSuggestions {
   allShownDishNames: string[];
   previousCacheId?: string;
   categoryMask?: number;
+  ingredients?: string[];
   createdAt: number;
 }
 
@@ -56,11 +57,12 @@ function shortId(): string {
   return randomBytes(4).toString('hex');
 }
 
-function cacheSuggestions(
+export function cacheSuggestions(
   data: RecipeSuggestionsResponse,
   userId: string,
   previouslyShown?: string[],
   previousCacheId?: string,
+  ingredients?: string[],
 ): { cacheId: string; dishIdMap: Map<string, string> } {
   const cacheId = shortId();
   const dishes = new Map<string, CachedDish>();
@@ -90,6 +92,7 @@ function cacheSuggestions(
     dishes,
     allShownDishNames,
     previousCacheId,
+    ingredients,
     createdAt: Date.now(),
   });
 
@@ -289,6 +292,7 @@ export function registerCookHandler(
 
       const data = await getRecipeSuggestions(api, cached.userId, {
         exclude: cached.allShownDishNames,
+        ingredients: cached.ingredients,
       });
       await hideLoading();
 
@@ -308,6 +312,7 @@ export function registerCookHandler(
         cached.userId,
         cached.allShownDishNames,
         cacheId,
+        cached.ingredients,
       );
 
       const message = formatRecipeSuggestions(data, ctx.lang);

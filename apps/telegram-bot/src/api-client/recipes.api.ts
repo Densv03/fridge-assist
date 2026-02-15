@@ -4,7 +4,7 @@ import { ConsumeResult, RecipeDetail, RecipeSuggestionsResponse } from './types'
 export async function getRecipeSuggestions(
   api: ApiClient,
   userId: string,
-  options?: { exclude?: string[]; mode?: 'more' | 'creative'; categories?: string[] },
+  options?: { exclude?: string[]; mode?: 'more' | 'creative'; categories?: string[]; ingredients?: string[] },
 ): Promise<RecipeSuggestionsResponse> {
   const params: Record<string, string> = {};
   if (options?.exclude?.length) {
@@ -15,6 +15,9 @@ export async function getRecipeSuggestions(
   }
   if (options?.categories?.length) {
     params.categories = options.categories.join(',');
+  }
+  if (options?.ingredients?.length) {
+    params.ingredients = options.ingredients.join(',');
   }
 
   const { data } = await api.get<RecipeSuggestionsResponse>(

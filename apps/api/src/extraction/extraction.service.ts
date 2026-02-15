@@ -11,11 +11,23 @@ Rules:
   Examples: "яйця" → "Eggs", "молоко" → "Milk", "хліб" → "Bread", "курка" → "Chicken Breast", "рис" → "Rice"
 - ALWAYS return the Ukrainian translation in the "name_ua" field
   Examples: "Eggs" → "Яйця", "Milk" → "Молоко", "Bread" → "Хліб", "Chicken Breast" → "Куряче філе", "Tea" → "Чай", "Ice Cream" → "Морозиво", "Sunflower Seeds" → "Насіння соняшнику"
-- Determine the intent: ADD (bought/received), CONSUME (ate/used/cooked), WASTE (threw away/expired/spoiled), or CLEAR_ALL (ate/used/threw away EVERYTHING, emptied the fridge)
+- Determine the intent: ADD (bought/received), CONSUME (ate/used/cooked), WASTE (threw away/expired/spoiled), SET (remaining/left — user states absolute quantity currently on hand), CLEAR_ALL (ate/used/threw away EVERYTHING, emptied the fridge), COOK (wants to cook something / asks for recipe suggestions), or FRIDGE (wants to see what's in the fridge)
   Intent keywords by language:
   - UA: купив/купила = ADD, з'їв/з'їла/приготував = CONSUME, викинув/зіпсувалось = WASTE
   - RU: купил/купила = ADD, съел/съела/приготовил = CONSUME, выбросил/испортилось = WASTE
+  - SET intent: user states what REMAINS or what they currently HAVE (absolute quantity, not a delta)
+    EN keywords: "remains", "left", "have left", "remaining", "I have", "there is"
+    UA keywords: "залишилось", "залишилося", "лишилось", "є", "маю", "лишилося"
+    RU keywords: "осталось", "осталась", "остался", "есть", "имеется"
+  - Disambiguation: "bought 2 eggs" = ADD, "2 eggs remain" = SET, "ate 2 eggs" = CONSUME, "2 eggs left" = SET
   - "ate everything"/"з'їв все"/"съел всё"/"cleared the fridge"/"очистив холодильник" = CLEAR_ALL
+  - COOK intent: user wants to cook something or asks for recipe suggestions
+    Keywords: "want to cook", "what can I make", "suggest recipe", "що приготувати", "хочу приготувати", "что приготовить", "що зготувати"
+  - For COOK: extract mentioned ingredients as items (if any). If no specific ingredient is mentioned, return empty items array.
+  - Do NOT confuse with CONSUME ("cooked chicken yesterday" = CONSUME, "want to cook chicken" = COOK)
+  - FRIDGE intent: user wants to see their fridge contents / inventory
+    Keywords: "what's in my fridge", "what do I have", "show my fridge", "що в мене є", "що в холодильнику", "покажи холодильник", "что в холодильнике", "что у меня есть"
+  - For FRIDGE: return an EMPTY items array
 - Use CLEAR_ALL when the user means ALL items without naming specific ones. Return an EMPTY items array with CLEAR_ALL
 - Default intent is ADD if unclear
 - Normalize quantities: "a dozen"/"дюжина" = 12, "a couple"/"пара" = 2, "a few"/"кілька"/"несколько" = 3
@@ -80,7 +92,7 @@ const RESPONSE_SCHEMA = {
   properties: {
     intent: {
       type: Type.STRING,
-      enum: ['ADD', 'CONSUME', 'WASTE', 'CLEAR_ALL'],
+      enum: ['ADD', 'CONSUME', 'WASTE', 'SET', 'CLEAR_ALL', 'COOK', 'FRIDGE'],
     },
     items: {
       type: Type.ARRAY,

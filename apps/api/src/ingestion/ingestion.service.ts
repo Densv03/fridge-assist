@@ -26,6 +26,11 @@ import {
 } from './dto/extraction-preview.dto';
 import { areUnitsCompatible } from '../common/utils/unit-conversion';
 
+function intentToAction(intent: string): ActionType {
+  if (intent === 'SET') return ActionType.ADJUSTMENT;
+  return intent as ActionType;
+}
+
 @Injectable()
 export class IngestionService {
   private readonly logger = new Logger(IngestionService.name);
@@ -108,7 +113,8 @@ export class IngestionService {
     }
 
     const normalized = await this.normalization.normalize(extracted.items);
-    const action = extracted.intent as ActionType;
+    const isSet = extracted.intent === 'SET';
+    const action = intentToAction(extracted.intent);
 
     const processedItems: ProcessResult['processed_items'] = [];
     const transactionIds: string[] = [];
@@ -116,15 +122,24 @@ export class IngestionService {
     // Process matched + auto-created items
     const allMatched = [...normalized.matched, ...normalized.created];
     for (const item of allMatched) {
-      const quantityChange =
-        action === ActionType.ADD ? item.quantity : -item.quantity;
+      if (isSet) {
+        await this.inventory.setQuantity(
+          userId,
+          item.ingredient_id,
+          item.quantity,
+          item.unit,
+        );
+      } else {
+        const quantityChange =
+          action === ActionType.ADD ? item.quantity : -item.quantity;
 
-      const inventoryItem = await this.inventory.adjustQuantity(
-        userId,
-        item.ingredient_id,
-        quantityChange,
-        item.unit,
-      );
+        await this.inventory.adjustQuantity(
+          userId,
+          item.ingredient_id,
+          quantityChange,
+          item.unit,
+        );
+      }
 
       const txInput: LogTransactionInput = {
         userId,
@@ -243,6 +258,35 @@ export class IngestionService {
         items: [],
         clarifications: [],
         cleared_count: count,
+      };
+    }
+
+    // FRIDGE — no processing needed, bot will show inventory
+    if (extracted.intent === 'FRIDGE') {
+      return {
+        preview_id: '',
+        intent: 'FRIDGE',
+        items: [],
+        clarifications: [],
+      };
+    }
+
+    // COOK — return items without normalization or DB preview
+    if (extracted.intent === 'COOK') {
+      return {
+        preview_id: '',
+        intent: 'COOK',
+        items: extracted.items.map((item, i) => ({
+          id: String(i),
+          raw_name: item.name,
+          canonical_name: item.name,
+          canonical_name_ua: item.name_ua,
+          ingredient_id: '',
+          quantity: item.quantity,
+          unit: item.unit,
+          confidence: 1,
+        })),
+        clarifications: [],
       };
     }
 
@@ -406,7 +450,8 @@ export class IngestionService {
 
     if (itemsError) throw itemsError;
 
-    const action = preview.intent as ActionType;
+    const isSet = preview.intent === 'SET';
+    const action = intentToAction(preview.intent);
     const processedItems: ProcessResult['processed_items'] = [];
     const transactionIds: string[] = [];
 
@@ -435,15 +480,24 @@ export class IngestionService {
         canonicalNameUa = created.canonical_name_ua;
       }
 
-      const quantityChange =
-        action === ActionType.ADD ? item.quantity : -item.quantity;
+      if (isSet) {
+        await this.inventory.setQuantity(
+          userId,
+          ingredientId,
+          Number(item.quantity),
+          item.unit,
+        );
+      } else {
+        const quantityChange =
+          action === ActionType.ADD ? item.quantity : -item.quantity;
 
-      await this.inventory.adjustQuantity(
-        userId,
-        ingredientId,
-        quantityChange,
-        item.unit,
-      );
+        await this.inventory.adjustQuantity(
+          userId,
+          ingredientId,
+          quantityChange,
+          item.unit,
+        );
+      }
 
       const txInput: LogTransactionInput = {
         userId,

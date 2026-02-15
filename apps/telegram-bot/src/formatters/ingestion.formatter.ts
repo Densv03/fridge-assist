@@ -6,6 +6,7 @@ const ACTION_EMOJI: Record<string, string> = {
   ADD: '➕',
   CONSUME: '➖',
   WASTE: '🗑',
+  SET: '🔄',
   ADJUSTMENT: '🔄',
 };
 

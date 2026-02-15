@@ -11,6 +11,8 @@ import { BotContext } from '../middleware/auth';
 import { t } from '../i18n/locales';
 import { logger } from '../utils/logger';
 import { showLoading } from '../utils/loading';
+import { handleCookIntent } from '../utils/cook-intent';
+import { handleFridgeIntent } from '../utils/fridge-intent';
 
 export function registerTextHandler(
   bot: Bot<BotContext>,
@@ -39,6 +41,18 @@ export function registerTextHandler(
         ctx.message.text,
       );
       await hideLoading();
+
+      // FRIDGE — show inventory
+      if (preview.intent === 'FRIDGE') {
+        await handleFridgeIntent(ctx, api);
+        return;
+      }
+
+      // COOK — show recipe suggestions
+      if (preview.intent === 'COOK') {
+        await handleCookIntent(ctx, api, preview);
+        return;
+      }
 
       // CLEAR_ALL — processed immediately, show result
       if (preview.intent === 'CLEAR_ALL') {

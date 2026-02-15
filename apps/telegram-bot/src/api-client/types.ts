@@ -39,7 +39,7 @@ export interface ProcessedItem {
   ingredient_id: string;
   quantity: number;
   unit: string;
-  action: 'ADD' | 'CONSUME' | 'WASTE' | 'ADJUSTMENT';
+  action: 'ADD' | 'CONSUME' | 'WASTE' | 'SET' | 'ADJUSTMENT';
 }
 
 export interface Clarification {

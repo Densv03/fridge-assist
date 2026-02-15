@@ -14,6 +14,8 @@ import { logger } from '../utils/logger';
 import { config } from '../config';
 import { ExtractionPreview } from '../api-client/types';
 import { showLoading } from '../utils/loading';
+import { handleCookIntent } from '../utils/cook-intent';
+import { handleFridgeIntent } from '../utils/fridge-intent';
 
 function sendPreview(
   ctx: BotContext & { lang: 'ua' | 'en'; internalUserId?: string },
@@ -79,8 +81,14 @@ export function registerPhotoHandler(
       );
       await hideLoading();
 
-      // CLEAR_ALL
-      if (preview.intent === 'CLEAR_ALL') {
+      // FRIDGE — show inventory
+      if (preview.intent === 'FRIDGE') {
+        await handleFridgeIntent(ctx, api);
+      } else if (preview.intent === 'COOK') {
+        // COOK — show recipe suggestions
+        await handleCookIntent(ctx, api, preview);
+      } else if (preview.intent === 'CLEAR_ALL') {
+        // CLEAR_ALL
         const fakeResult = {
           status: 'completed' as const,
           processed_items: [],
@@ -112,7 +120,11 @@ export function registerPhotoHandler(
           );
           await hideCaptionLoading();
 
-          if (textPreview.intent === 'CLEAR_ALL') {
+          if (textPreview.intent === 'FRIDGE') {
+            await handleFridgeIntent(ctx, api);
+          } else if (textPreview.intent === 'COOK') {
+            await handleCookIntent(ctx, api, textPreview);
+          } else if (textPreview.intent === 'CLEAR_ALL') {
             const fakeResult = {
               status: 'completed' as const,
               processed_items: [],

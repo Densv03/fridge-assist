@@ -53,6 +53,7 @@ const strings: Record<Lang, Record<string, string>> = {
       'Не вдалося обробити голосове повідомлення. Спробуйте ще раз.',
 
     // preview / confirmation
+    preview_title_set: '🔄 <b>Оновити залишки:</b>',
     preview_title: '<b>Знайдено продукти:</b>',
     preview_clarification_note: '<b>Потребують уточнення:</b>',
     btn_confirm: '✅ Підтвердити',
@@ -115,6 +116,7 @@ const strings: Record<Lang, Record<string, string>> = {
     cook_cat_deselect_all: '☐ Зняти все',
     cook_cat_go: '🔍 Шукати',
     cook_cat_none_selected: 'Оберіть хоча б одну категорію!',
+    cook_with_title: '🍳 <b>Рецепти з {ingredients}:</b>\n',
 
     // help
     help_title: '📖 <b>Доступні команди:</b>\n',
@@ -179,6 +181,7 @@ const strings: Record<Lang, Record<string, string>> = {
     voice_error: 'Failed to process the voice message. Please try again.',
 
     // preview / confirmation
+    preview_title_set: '🔄 <b>Update remaining:</b>',
     preview_title: '<b>Items detected:</b>',
     preview_clarification_note: '<b>Need clarification:</b>',
     btn_confirm: '✅ Confirm',
@@ -241,6 +244,7 @@ const strings: Record<Lang, Record<string, string>> = {
     cook_cat_deselect_all: '☐ Deselect all',
     cook_cat_go: '🔍 Search',
     cook_cat_none_selected: 'Please select at least one category!',
+    cook_with_title: '🍳 <b>Recipes with {ingredients}:</b>\n',
 
     // help
     help_title: '📖 <b>Available commands:</b>\n',

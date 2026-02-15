@@ -204,7 +204,7 @@ export class RecipesService {
 
   async getSuggestions(
     userId: string,
-    options?: { exclude?: string[]; mode?: 'more' | 'creative'; categories?: string[] },
+    options?: { exclude?: string[]; mode?: 'more' | 'creative'; categories?: string[]; ingredients?: string[] },
   ) {
     if (options?.mode === 'creative') {
       return this.getCreativeSuggestions(userId, options.exclude, options.categories);
@@ -237,6 +237,14 @@ export class RecipesService {
         `ONLY suggest dishes from these meal categories: ${options.categories.join(', ')}. Do NOT suggest dishes from any other category.`,
       );
     }
+    if (options?.ingredients?.length) {
+      strictInstructions.push(
+        `The user specifically wants to cook with: ${options.ingredients.join(', ')}. ` +
+        `PRIORITIZE recipes that prominently feature these ingredients. ` +
+        `Every dish in "can_cook" MUST use at least one of these ingredients. ` +
+        `Most dishes in "need_to_buy" should also use these ingredients.`,
+      );
+    }
     if (tasteInstruction) strictInstructions.push(tasteInstruction);
 
     const strictResult = await this.callGeminiForSuggestions(
@@ -261,6 +269,14 @@ export class RecipesService {
     if (options?.categories?.length) {
       relaxedInstructions.push(
         `ONLY suggest dishes from these meal categories: ${options.categories.join(', ')}. Do NOT suggest dishes from any other category.`,
+      );
+    }
+    if (options?.ingredients?.length) {
+      relaxedInstructions.push(
+        `The user specifically wants to cook with: ${options.ingredients.join(', ')}. ` +
+        `PRIORITIZE recipes that prominently feature these ingredients. ` +
+        `Every dish in "can_cook" MUST use at least one of these ingredients. ` +
+        `Most dishes in "need_to_buy" should also use these ingredients.`,
       );
     }
     if (tasteInstruction) relaxedInstructions.push(tasteInstruction);

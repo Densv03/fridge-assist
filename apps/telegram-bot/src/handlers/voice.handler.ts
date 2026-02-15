@@ -13,6 +13,8 @@ import { downloadTelegramFile } from '../utils/file-download';
 import { logger } from '../utils/logger';
 import { config } from '../config';
 import { showLoading } from '../utils/loading';
+import { handleCookIntent } from '../utils/cook-intent';
+import { handleFridgeIntent } from '../utils/fridge-intent';
 
 export function registerVoiceHandler(
   bot: Bot<BotContext>,
@@ -54,6 +56,18 @@ export function registerVoiceHandler(
         'audio/ogg',
       );
       await hideLoading();
+
+      // FRIDGE — show inventory
+      if (preview.intent === 'FRIDGE') {
+        await handleFridgeIntent(ctx, api);
+        return;
+      }
+
+      // COOK — show recipe suggestions
+      if (preview.intent === 'COOK') {
+        await handleCookIntent(ctx, api, preview);
+        return;
+      }
 
       // CLEAR_ALL
       if (preview.intent === 'CLEAR_ALL') {

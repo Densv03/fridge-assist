@@ -7,6 +7,6 @@ export interface ExtractedItem {
 }
 
 export interface ExtractionResult {
-  intent: 'ADD' | 'CONSUME' | 'WASTE' | 'CLEAR_ALL';
+  intent: 'ADD' | 'CONSUME' | 'WASTE' | 'SET' | 'CLEAR_ALL' | 'COOK' | 'FRIDGE';
   items: ExtractedItem[];
 }

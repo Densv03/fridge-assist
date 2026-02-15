@@ -119,6 +119,85 @@ export class InventoryService {
     }
   }
 
+  async setQuantity(
+    userId: string,
+    ingredientId: string,
+    absoluteQuantity: number,
+    unit: string,
+  ) {
+    const client = this.supabase.getClient();
+
+    const { data: rows } = await client
+      .from('user_inventory')
+      .select('id, quantity, unit')
+      .eq('user_id', userId)
+      .eq('ingredient_id', ingredientId);
+
+    if (absoluteQuantity <= 0) {
+      // Delete all rows for this ingredient
+      if (rows && rows.length > 0) {
+        const { error } = await client
+          .from('user_inventory')
+          .delete()
+          .eq('user_id', userId)
+          .eq('ingredient_id', ingredientId);
+        if (error) throw error;
+        this.logger.log(
+          `SET: removed all inventory for ingredient ${ingredientId}, user ${userId} (quantity <= 0)`,
+        );
+      }
+      return { id: '', quantity: 0, unit, status: 'Out of Stock' };
+    }
+
+    if (rows && rows.length > 0) {
+      // Update first row, delete extras
+      const first = rows[0];
+      const extras = rows.slice(1);
+
+      if (extras.length > 0) {
+        const { error } = await client
+          .from('user_inventory')
+          .delete()
+          .in('id', extras.map((r) => r.id));
+        if (error) throw error;
+      }
+
+      const newStatus = this.computeStatus(absoluteQuantity);
+      const { data, error } = await client
+        .from('user_inventory')
+        .update({ quantity: absoluteQuantity, unit, status: newStatus })
+        .eq('id', first.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      this.logger.log(
+        `SET: updated inventory ${first.id} to ${absoluteQuantity} ${unit} for user ${userId}`,
+      );
+      return data;
+    }
+
+    // No existing rows — insert new
+    const newStatus = this.computeStatus(absoluteQuantity);
+    const { data, error } = await client
+      .from('user_inventory')
+      .insert({
+        user_id: userId,
+        ingredient_id: ingredientId,
+        quantity: absoluteQuantity,
+        unit,
+        status: newStatus,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    this.logger.log(
+      `SET: created inventory ${data.id} with ${absoluteQuantity} ${unit} for user ${userId}`,
+    );
+    return data;
+  }
+
   async update(
     id: string,
     userId: string,

@@ -16,6 +16,8 @@ import {
   buildPreviewKeyboard,
 } from '../formatters/confirmation.formatter';
 import { formatIngestionResult } from '../formatters/ingestion.formatter';
+import { getInventory } from '../api-client/inventory.api';
+import { formatInventoryList } from '../formatters/inventory.formatter';
 import { BotContext } from '../middleware/auth';
 import { t } from '../i18n/locales';
 import { logger } from '../utils/logger';
@@ -187,6 +189,15 @@ export function registerConfirmationHandler(
 
       await ctx.editMessageText(text, { parse_mode: 'HTML' });
       await ctx.answerCallbackQuery();
+
+      // Show updated fridge
+      try {
+        const items = await getInventory(api, cached.userId);
+        const fridgeText = formatInventoryList(items, ctx.lang);
+        await ctx.reply(fridgeText, { parse_mode: 'HTML' });
+      } catch (fridgeErr) {
+        logger.error('Failed to show fridge after confirm', fridgeErr);
+      }
     } catch (err: any) {
       logger.error('Failed to confirm preview', err);
       if (err?.response?.status === 410) {

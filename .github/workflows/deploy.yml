@@ -34,7 +34,9 @@ jobs:
           npm rebuild @swc/core esbuild @parcel/watcher unrs-resolver
 
       - name: Build API & Bot
-        run: npx nx run-many -t build -p api telegram-bot
+        run: npx nx run-many -t build -p api telegram-bot --verbose
+        env:
+          NX_DAEMON: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -146,6 +146,11 @@ const strings: Record<Lang, Record<string, string>> = {
     // language
     lang_prompt: '🌐 <b>Оберіть мову:</b>',
     lang_changed: '✅ Мову змінено на українську.',
+
+    // update
+    update_no_text: '⚠️ Використання: /update &lt;опис оновлення&gt;',
+    update_started: '📤 Розсилка розпочата для {count} користувачів...',
+    update_finished: '✅ Розсилку завершено!\n\nУспішно: {success}\nНе вдалося: {failed}',
   },
 
   en: {
@@ -290,6 +295,11 @@ const strings: Record<Lang, Record<string, string>> = {
     // language
     lang_prompt: '🌐 <b>Choose your language:</b>',
     lang_changed: '✅ Language changed to English.',
+
+    // update
+    update_no_text: '⚠️ Usage: /update &lt;update description&gt;',
+    update_started: '📤 Broadcast started for {count} users...',
+    update_finished: '✅ Broadcast complete!\n\nSuccess: {success}\nFailed: {failed}',
   },
 };
 

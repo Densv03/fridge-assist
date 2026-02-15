@@ -18,6 +18,11 @@ export async function resolveUser(
   return data;
 }
 
+export async function getAllUsers(api: ApiClient): Promise<ResolvedUser[]> {
+  const { data } = await api.get<ResolvedUser[]>('/users');
+  return data;
+}
+
 export async function updateUser(
   api: ApiClient,
   userId: string,

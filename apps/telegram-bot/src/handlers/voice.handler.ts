@@ -15,6 +15,7 @@ import { config } from '../config';
 import { showLoading } from '../utils/loading';
 import { handleCookIntent } from '../utils/cook-intent';
 import { handleFridgeIntent } from '../utils/fridge-intent';
+import { handleReportIntent } from '../utils/report-intent';
 
 export function registerVoiceHandler(
   bot: Bot<BotContext>,
@@ -66,6 +67,12 @@ export function registerVoiceHandler(
       // COOK — show recipe suggestions
       if (preview.intent === 'COOK') {
         await handleCookIntent(ctx, api, preview);
+        return;
+      }
+
+      // REPORT — save bug/idea report
+      if (preview.intent === 'REPORT') {
+        await handleReportIntent(ctx, api, preview);
         return;
       }
 

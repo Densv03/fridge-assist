@@ -271,6 +271,18 @@ export class IngestionService {
       };
     }
 
+    // REPORT — return report details, no processing needed
+    if (extracted.intent === 'REPORT') {
+      return {
+        preview_id: '',
+        intent: 'REPORT',
+        items: [],
+        clarifications: [],
+        report_type: extracted.report_type,
+        report_description: extracted.report_description,
+      };
+    }
+
     // COOK — return items without normalization or DB preview
     if (extracted.intent === 'COOK') {
       return {

@@ -36,4 +36,6 @@ export interface ExtractionPreview {
   items: PreviewItem[];
   clarifications: PreviewClarification[];
   cleared_count?: number;
+  report_type?: 'bug' | 'idea';
+  report_description?: string;
 }

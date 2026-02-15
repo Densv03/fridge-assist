@@ -118,6 +118,12 @@ const strings: Record<Lang, Record<string, string>> = {
     cook_cat_none_selected: 'Оберіть хоча б одну категорію!',
     cook_with_title: '🍳 <b>Рецепти з {ingredients}:</b>\n',
 
+    // report
+    report_saved: '✅ Дякуємо за {type}! Ми обов\'язково розглянемо.',
+    report_type_bug: 'ваш звіт про помилку',
+    report_type_idea: 'вашу пропозицію',
+    report_error: 'Не вдалося зберегти звіт. Спробуйте ще раз.',
+
     // help
     help_title: '📖 <b>Доступні команди:</b>\n',
     help_commands:
@@ -245,6 +251,12 @@ const strings: Record<Lang, Record<string, string>> = {
     cook_cat_go: '🔍 Search',
     cook_cat_none_selected: 'Please select at least one category!',
     cook_with_title: '🍳 <b>Recipes with {ingredients}:</b>\n',
+
+    // report
+    report_saved: '✅ Thank you for your {type}! We\'ll review it shortly.',
+    report_type_bug: 'bug report',
+    report_type_idea: 'idea',
+    report_error: 'Failed to save the report. Please try again.',
 
     // help
     help_title: '📖 <b>Available commands:</b>\n',

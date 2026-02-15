@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    image: fridge-api:latest
+    container_name: fridge-api
+    ports:
+      - '127.0.0.1:3000:3000'
+    env_file: .env
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: docker/telegram-bot.Dockerfile
+    image: fridge-bot:latest
+    container_name: fridge-bot
+    env_file: .env
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy

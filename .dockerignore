@@ -1,0 +1,11 @@
+node_modules
+dist
+.nx
+.git
+.github
+.claude
+apps/mobile
+apps/web
+*.md
+.env
+.env.*

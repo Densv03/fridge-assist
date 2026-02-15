@@ -28,6 +28,11 @@ Rules:
   - FRIDGE intent: user wants to see their fridge contents / inventory
     Keywords: "what's in my fridge", "what do I have", "show my fridge", "що в мене є", "що в холодильнику", "покажи холодильник", "что в холодильнике", "что у меня есть"
   - For FRIDGE: return an EMPTY items array
+  - REPORT intent: user reports a bug, problem, issue, or suggests an idea/feature/improvement
+    EN: "bug", "problem", "not working", "broken", "error", "idea", "suggestion", "feature request", "would be nice"
+    UA: "баг", "помилка", "не працює", "проблема", "зламалося", "ідея", "пропозиція", "побажання", "було б добре"
+    RU: "баг", "ошибка", "не работает", "проблема", "сломалось", "идея", "предложение", "пожелание", "было бы хорошо"
+  - For REPORT: return EMPTY items array. Set report_type ("bug" or "idea"). Set report_description to a concise summary in the ORIGINAL language.
 - Use CLEAR_ALL when the user means ALL items without naming specific ones. Return an EMPTY items array with CLEAR_ALL
 - Default intent is ADD if unclear
 - Normalize quantities: "a dozen"/"дюжина" = 12, "a couple"/"пара" = 2, "a few"/"кілька"/"несколько" = 3
@@ -92,7 +97,7 @@ const RESPONSE_SCHEMA = {
   properties: {
     intent: {
       type: Type.STRING,
-      enum: ['ADD', 'CONSUME', 'WASTE', 'SET', 'CLEAR_ALL', 'COOK', 'FRIDGE'],
+      enum: ['ADD', 'CONSUME', 'WASTE', 'SET', 'CLEAR_ALL', 'COOK', 'FRIDGE', 'REPORT'],
     },
     items: {
       type: Type.ARRAY,
@@ -124,6 +129,13 @@ const RESPONSE_SCHEMA = {
         },
         required: ['name', 'name_ua', 'quantity', 'unit', 'category'],
       },
+    },
+    report_type: {
+      type: Type.STRING,
+      enum: ['bug', 'idea'],
+    },
+    report_description: {
+      type: Type.STRING,
     },
   },
   required: ['intent', 'items'],

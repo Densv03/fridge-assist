@@ -93,6 +93,15 @@ export interface ExtractionPreview {
   items: PreviewItem[];
   clarifications: PreviewClarification[];
   cleared_count?: number;
+  report_type?: 'bug' | 'idea';
+  report_description?: string;
+}
+
+export interface ReportResult {
+  id: string;
+  type: 'bug' | 'idea';
+  description: string;
+  created_at: string;
 }
 
 // ── Recipe types ──

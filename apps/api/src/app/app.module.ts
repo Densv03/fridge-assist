@@ -10,6 +10,7 @@ import { IngestionModule } from '../ingestion/ingestion.module';
 import { UsersModule } from '../users/users.module';
 import { LogsModule } from '../logs/logs.module';
 import { RecipesModule } from '../recipes/recipes.module';
+import { ReportsModule } from '../reports/reports.module';
 import { AuthModule } from '../auth/auth.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -30,6 +31,7 @@ import { AppService } from './app.service';
     TransactionsModule,
     IngestionModule,
     RecipesModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

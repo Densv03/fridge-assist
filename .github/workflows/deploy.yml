@@ -29,7 +29,9 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache-deps.outputs.cache-hit != 'true'
-        run: npm ci --ignore-scripts
+        run: |
+          npm ci --ignore-scripts
+          npm rebuild @swc/core esbuild @parcel/watcher unrs-resolver
 
       - name: Build API & Bot
         run: npx nx run-many -t build -p api telegram-bot

@@ -29,7 +29,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache-deps.outputs.cache-hit != 'true'
-        run: npm ci
+        run: npm ci --loglevel verbose
 
       - name: Build API & Bot
         run: npx nx run-many -t build -p api telegram-bot

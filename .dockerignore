@@ -1,5 +1,7 @@
 node_modules
 dist
+!dist/api
+!dist/telegram-bot
 .nx
 .git
 .github

@@ -11,4 +11,5 @@ export interface ExtractionResult {
   items: ExtractedItem[];
   report_type?: 'bug' | 'idea';
   report_description?: string;
+  transcription?: string;
 }

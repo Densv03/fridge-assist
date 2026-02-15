@@ -5,18 +5,24 @@ const strings: Record<Lang, Record<string, string>> = {
     // start
     welcome:
       '👋 <b>Ласкаво просимо до Fridge Assist!</b>\n\n' +
-      'Я допомагаю відстежувати продукти у вашому холодильнику.\n\n' +
-      'Щоб почати, поділіться номером телефону за допомогою кнопки нижче.',
+      'Я розумію текст, фото та голосові повідомлення.\nПросто напишіть мені, наприклад:\n\n' +
+      '🛒 "Купив молоко, яйця і хліб"\n' +
+      '🍳 "З\'їв 3 яйця"\n' +
+      '🗑 "Викинув зіпсоване молоко"\n' +
+      '📦 "Залишилось 5 яблук"\n' +
+      '👨‍🍳 "Що приготувати?"\n' +
+      '🧊 "Що в холодильнику?"\n\n' +
+      'Або надішліть 📸 фото продуктів чи 🎤 голосове.\n\n' +
+      'Щоб почати, поділіться номером телефону за допомогою кнопки нижче.' + 
+      'Маєте ідею чи знайшли проблему? Просто скажіть або напишіть і ми дізнаємося про це\n',
     share_phone_button: '📱 Поділитися номером',
 
     // contact
     phone_saved:
       '✅ <b>Номер збережено!</b>\n\n' +
-      'Все готово! Ось що я вмію:\n\n' +
-      '📝 Надішліть текст, наприклад "купив 2 яблука"\n' +
-      '📸 Надішліть фото продуктів\n' +
-      '🎤 Надішліть голосове повідомлення\n' +
-      '📋 Використовуйте /fridge щоб переглянути запаси',
+      'Все готово! Спробуйте надіслати мені:\n\n' +
+      '"Купив 2 яблука і молоко"\n\n' +
+      'Або надішліть 📸 фото чи 🎤 голосове повідомлення з продуктами.',
     phone_save_error: 'Не вдалося зберегти номер телефону. Спробуйте ще раз.',
     generic_error: 'Щось пішло не так. Спробуйте /start ще раз.',
 
@@ -125,13 +131,17 @@ const strings: Record<Lang, Record<string, string>> = {
     report_error: 'Не вдалося зберегти звіт. Спробуйте ще раз.',
 
     // help
-    help_title: '📖 <b>Доступні команди:</b>\n',
+    help_title: '📖 <b>Що я вмію:</b>\n',
     help_commands:
-      '/start — Почати / перезапустити\n' +
-      '/fridge — Переглянути запаси\n' +
-      '/cook — Що приготувати?\n' +
-      '/lang — Змінити мову\n' +
-      '/help — Показати цю довідку',
+      'Надішліть мені повідомлення, наприклад:\n\n' +
+      '🛒 "Купив молоко, яйця і хліб"\n' +
+      '🍳 "З\'їв 3 яйця"\n' +
+      '🗑 "Викинув зіпсоване молоко"\n' +
+      '📦 "Залишилось 5 яблук"\n' +
+      '👨‍🍳 "Що приготувати?"\n' +
+      '🧊 "Що в холодильнику?"\n\n' +
+      'Також можна надіслати 📸 фото або 🎤 голосове.\n\n' +
+      'Команди: /fridge · /cook · /lang',
 
     // language
     lang_prompt: '🌐 <b>Оберіть мову:</b>',
@@ -142,18 +152,24 @@ const strings: Record<Lang, Record<string, string>> = {
     // start
     welcome:
       '👋 <b>Welcome to Fridge Assist!</b>\n\n' +
-      'I help you track what\'s in your fridge.\n\n' +
-      'To get started, please share your phone number using the button below.',
+      'I understand text, photos, and voice messages.\nJust write to me, for example:\n\n' +
+      '🛒 "Bought milk, eggs, and bread"\n' +
+      '🍳 "Ate 3 eggs"\n' +
+      '🗑 "Threw away spoiled milk"\n' +
+      '📦 "5 apples left"\n' +
+      '👨‍🍳 "What can I cook?"\n' +
+      '🧊 "What\'s in my fridge?"\n\n' +
+      'Or send a 📸 photo of groceries or a 🎤 voice message.\n\n' +
+      'To get started, please share your phone number using the button below.\n\n' +
+      'Have an idea or found a problem? Just say or write and we\'ll find out about it.',
     share_phone_button: '📱 Share phone number',
 
     // contact
     phone_saved:
       '✅ <b>Phone number saved!</b>\n\n' +
-      'You\'re all set! Here\'s what I can do:\n\n' +
-      '📝 Send a text like "bought 2 apples"\n' +
-      '📸 Send a photo of groceries\n' +
-      '🎤 Send a voice message\n' +
-      '📋 Use /fridge to see your inventory',
+      'You\'re all set! Try sending me:\n\n' +
+      '"Bought 2 apples and milk"\n\n' +
+      'Or send a 📸 photo or 🎤 voice message with your groceries.',
     phone_save_error: 'Failed to save your phone number. Please try again.',
     generic_error: 'Something went wrong. Please try /start again.',
 
@@ -259,13 +275,17 @@ const strings: Record<Lang, Record<string, string>> = {
     report_error: 'Failed to save the report. Please try again.',
 
     // help
-    help_title: '📖 <b>Available commands:</b>\n',
+    help_title: '📖 <b>What I can do:</b>\n',
     help_commands:
-      '/start — Start / restart\n' +
-      '/fridge — Show inventory\n' +
-      '/cook — What can I cook?\n' +
-      '/lang — Change language\n' +
-      '/help — Show this help',
+      'Send me a message like:\n\n' +
+      '🛒 "Bought milk, eggs, and bread"\n' +
+      '🍳 "Ate 3 eggs"\n' +
+      '🗑 "Threw away spoiled milk"\n' +
+      '📦 "5 apples left"\n' +
+      '👨‍🍳 "What can I cook?"\n' +
+      '🧊 "What\'s in my fridge?"\n\n' +
+      'You can also send a 📸 photo or 🎤 voice message.\n\n' +
+      'Commands: /fridge · /cook · /lang',
 
     // language
     lang_prompt: '🌐 <b>Choose your language:</b>',

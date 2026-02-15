@@ -198,18 +198,27 @@ export class ExtractionService {
     const ai = this.gemini.getClient();
     const base64 = buffer.toString('base64');
 
+    const audioResponseSchema = {
+      ...RESPONSE_SCHEMA,
+      properties: {
+        ...RESPONSE_SCHEMA.properties,
+        transcription: { type: Type.STRING },
+      },
+      required: [...RESPONSE_SCHEMA.required, 'transcription'],
+    };
+
     const response = await ai.models.generateContent({
       model: this.model,
       contents: [
         {
           inlineData: { data: base64, mimeType },
         },
-        'Transcribe and extract all food/grocery items mentioned. List each item with quantity and unit.',
+        'Transcribe and extract all food/grocery items mentioned. List each item with quantity and unit. Return the full transcription in the "transcription" field.',
       ],
       config: {
         systemInstruction: SYSTEM_PROMPT,
         responseMimeType: 'application/json',
-        responseSchema: RESPONSE_SCHEMA,
+        responseSchema: audioResponseSchema,
       },
     });
 

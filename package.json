@@ -14,7 +14,7 @@
     "build:mobile:android": "nx build-android mobile",
     "build:mobile:ios": "nx build-ios mobile",
     "test:mobile": "nx test mobile",
-    "dev:all": "nx run-many -t serve -p api telegram-bot web"
+    "dev:all": "nx run-many -t serve -p api telegram-bot"
   },
   "private": true,
   "devDependencies": {

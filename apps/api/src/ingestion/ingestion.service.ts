@@ -85,13 +85,14 @@ export class IngestionService {
     fileName?: string,
   ): Promise<ProcessResult> {
     this.logger.log(`Processing audio (mime: ${mimeType}) for user ${userId}`);
+    const extracted = await this.extraction.extractFromAudio(buffer, mimeType);
     await this.logs.create({
       userId,
       inputType: InputType.AUDIO,
+      content: extracted.transcription,
       mimeType,
       fileName,
     });
-    const extracted = await this.extraction.extractFromAudio(buffer, mimeType);
     return this.processExtraction(userId, extracted, 'audio', null);
   }
 
@@ -233,13 +234,14 @@ export class IngestionService {
     this.logger.log(
       `Preview audio (mime: ${mimeType}) for user ${userId}`,
     );
+    const extracted = await this.extraction.extractFromAudio(buffer, mimeType);
     await this.logs.create({
       userId,
       inputType: InputType.AUDIO,
+      content: extracted.transcription,
       mimeType,
       fileName,
     });
-    const extracted = await this.extraction.extractFromAudio(buffer, mimeType);
     return this.createPreview(userId, extracted, 'audio', null);
   }
 

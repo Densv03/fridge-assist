@@ -47,7 +47,7 @@ jobs:
           context: .
           file: docker/api.Dockerfile
           tags: fridge-api:latest
-          outputs: type=docker,dest=/tmp/fridge-api.tar
+          outputs: type=docker,dest=fridge-api.tar
 
       - name: Build Bot image
         uses: docker/build-push-action@v6
@@ -55,7 +55,7 @@ jobs:
           context: .
           file: docker/telegram-bot.Dockerfile
           tags: fridge-bot:latest
-          outputs: type=docker,dest=/tmp/fridge-bot.tar
+          outputs: type=docker,dest=fridge-bot.tar
 
       - name: Copy images to server
         uses: appleboy/scp-action@v0.1.7
@@ -63,9 +63,8 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: /tmp/fridge-api.tar,/tmp/fridge-bot.tar
+          source: fridge-api.tar,fridge-bot.tar
           target: /tmp
-          strip_components: 1
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.0

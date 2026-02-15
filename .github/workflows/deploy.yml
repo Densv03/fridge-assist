@@ -63,7 +63,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: fridge-api.tar,fridge-bot.tar
+          source: fridge-api.tar,fridge-bot.tar,docker-compose.yml
           target: /tmp
 
       - name: Deploy on server
@@ -86,16 +86,17 @@ jobs:
             docker load -i /tmp/fridge-api.tar
             docker load -i /tmp/fridge-bot.tar
 
-            # Pull latest code (for docker-compose.yml updates)
+            # Copy compose file
+            cp /tmp/docker-compose.yml /opt/fridge-assist/docker-compose.yml
+
             cd /opt/fridge-assist
-            git pull origin main
 
             # Restart containers
             docker compose down
             docker compose up -d
 
             # Clean up
-            rm -f /tmp/fridge-api.tar /tmp/fridge-bot.tar
+            rm -f /tmp/fridge-api.tar /tmp/fridge-bot.tar /tmp/docker-compose.yml
             docker image prune -f
 
             # Verify

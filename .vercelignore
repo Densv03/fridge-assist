@@ -1,0 +1,8 @@
+node_modules
+dist
+.nx
+.git
+apps/mobile
+docker
+nx.json
+*.tar

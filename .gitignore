@@ -71,3 +71,4 @@ apps/mobile/ios/Runner/GeneratedPluginRegistrant.*
 .env
 .env.*
 !.env.example
+.vercel

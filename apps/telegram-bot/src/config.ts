@@ -2,6 +2,7 @@ export const config = {
   telegramBotToken: requireEnv('TELEGRAM_BOT_TOKEN'),
   apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:3000/api',
   adminChatId: process.env.ADMIN_CHAT_ID || '',
+  webhookSecret: process.env.WEBHOOK_SECRET || '',
 };
 
 function requireEnv(name: string): string {

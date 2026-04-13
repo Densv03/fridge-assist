@@ -40,15 +40,34 @@ async function bootstrap() {
 
 server.get('/debug/supabase', async (_req, res) => {
   try {
+    const url = process.env.SUPABASE_URL!;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+    // Test 1: raw fetch to Supabase REST API
+    const rawRes = await fetch(`${url}/rest/v1/users?select=id&limit=1`, {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+    });
+    const rawData = await rawRes.json();
+
+    // Test 2: supabase-js client
     const { createClient } = await import('@supabase/supabase-js');
-    const client = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+    const client = createClient(url, key);
     const { data, error } = await client.from('users').select('id').limit(1);
-    res.json({ ok: !error, data, error: error?.message });
+
+    res.json({
+      nodeVersion: process.version,
+      rawFetch: { status: rawRes.status, data: rawData },
+      supabaseJs: { ok: !error, data, error: error?.message },
+    });
   } catch (err: any) {
-    res.status(500).json({ error: err.message, stack: err.stack });
+    res.status(500).json({
+      error: err.message,
+      cause: err.cause?.message,
+      stack: err.stack?.split('\n').slice(0, 5),
+    });
   }
 });
 

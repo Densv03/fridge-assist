@@ -38,6 +38,20 @@ async function bootstrap() {
   return server;
 }
 
+server.get('/debug/supabase', async (_req, res) => {
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const client = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+    const { data, error } = await client.from('users').select('id').limit(1);
+    res.json({ ok: !error, data, error: error?.message });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+
 export default async function handler(
   req: express.Request,
   res: express.Response,

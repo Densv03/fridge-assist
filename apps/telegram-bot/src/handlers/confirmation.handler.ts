@@ -200,11 +200,21 @@ export function registerConfirmationHandler(
       }
     } catch (err: any) {
       logger.error('Failed to confirm preview', err);
-      if (err?.response?.status === 410) {
+      const status = err?.response?.status;
+      if (status === 410) {
         await ctx.answerCallbackQuery(t(ctx.lang, 'preview_expired'));
         previewCache.delete(sid);
       } else {
         await ctx.answerCallbackQuery(t(ctx.lang, 'confirm_error'));
+      }
+      // Strip the inline keyboard so the user can't mash retry on a non-idempotent op.
+      try {
+        await ctx.editMessageReplyMarkup({ reply_markup: undefined });
+      } catch {
+        // ignore — message may have been edited or deleted already
+      }
+      if (typeof status === 'number' && status >= 500) {
+        previewCache.delete(sid);
       }
     }
   });

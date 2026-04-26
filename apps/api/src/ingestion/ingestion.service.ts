@@ -449,11 +449,34 @@ export class IngestionService {
     if (previewError || !preview) {
       throw new NotFoundException('Preview not found');
     }
+    if (new Date(preview.expires_at) < new Date()) {
+      throw new GoneException('Preview has expired');
+    }
     if (preview.status !== 'pending') {
       throw new BadRequestException(`Preview already ${preview.status}`);
     }
-    if (new Date(preview.expires_at) < new Date()) {
-      throw new GoneException('Preview has expired');
+
+    // Atomically claim the preview so concurrent / retry callers can't double-apply.
+    const { data: claimed, error: claimError } = await client
+      .from('extraction_previews')
+      .update({ status: 'processing' })
+      .eq('id', previewId)
+      .eq('user_id', userId)
+      .eq('status', 'pending')
+      .select('id')
+      .maybeSingle();
+
+    if (claimError) throw claimError;
+    if (!claimed) {
+      const { data: current } = await client
+        .from('extraction_previews')
+        .select('status')
+        .eq('id', previewId)
+        .single();
+      if (current?.status === 'processing') {
+        throw new BadRequestException('Preview is already being processed');
+      }
+      throw new BadRequestException(`Preview already ${current?.status ?? 'unknown'}`);
     }
 
     // Load items
@@ -470,6 +493,9 @@ export class IngestionService {
     const transactionIds: string[] = [];
 
     for (const item of items ?? []) {
+      // Skip items already applied in a prior partial run of this preview.
+      if (item.processed_at) continue;
+
       let ingredientId = item.ingredient_id;
       let canonicalName = item.canonical_name;
       let canonicalNameUa = item.canonical_name_ua;
@@ -525,6 +551,12 @@ export class IngestionService {
       const tx = await this.transactions.log(txInput);
       transactionIds.push(tx.id);
 
+      const { error: markErr } = await client
+        .from('extraction_preview_items')
+        .update({ processed_at: new Date().toISOString() })
+        .eq('id', item.id);
+      if (markErr) throw markErr;
+
       processedItems.push({
         raw_name: item.raw_name,
         canonical_name: canonicalName,
@@ -537,10 +569,11 @@ export class IngestionService {
     }
 
     // Mark preview as confirmed
-    await client
+    const { error: confirmErr } = await client
       .from('extraction_previews')
       .update({ status: 'confirmed' })
       .eq('id', previewId);
+    if (confirmErr) throw confirmErr;
 
     this.logger.log(
       `Confirmed preview ${previewId}: ${processedItems.length} items for user ${userId}`,
@@ -567,14 +600,15 @@ export class IngestionService {
     if (error || !preview) {
       throw new NotFoundException('Preview not found');
     }
-    if (preview.status !== 'pending') {
+    if (preview.status !== 'pending' && preview.status !== 'processing') {
       throw new BadRequestException(`Preview already ${preview.status}`);
     }
 
-    await client
+    const { error: cancelErr } = await client
       .from('extraction_previews')
       .update({ status: 'cancelled' })
       .eq('id', previewId);
+    if (cancelErr) throw cancelErr;
 
     this.logger.log(`Cancelled preview ${previewId} for user ${userId}`);
   }
